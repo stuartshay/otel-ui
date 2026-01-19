@@ -16,6 +16,10 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css}\" \"**/*.md\"",
     "type-check": "tsc --noEmit",
     "preview": "vite preview",
+    "test": "playwright test",
+    "test:prod": "playwright test --config=playwright.config.prod.ts",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
     "prepare": "husky"
   },
   "dependencies": {
