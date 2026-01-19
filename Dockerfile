@@ -31,8 +31,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Copy built React app from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy built React app to template directory (will be copied to html at runtime)
+COPY --from=builder /app/dist /usr/share/nginx/html-template
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
