@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Silent Renew</title>
+  </head>
+  <body>
+    <script type="module">
+      import { UserManager } from 'oidc-client-ts';
+
+      // Silent token renewal - called in hidden iframe
+      new UserManager({
+        response_mode: 'query',
+      })
+        .signinSilentCallback()
+        .catch(error => {
+          console.error('Silent renew callback error:', error);
+        });
+    </script>
+  </body>
+</html>
