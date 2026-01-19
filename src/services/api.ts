@@ -1,7 +1,23 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
-import type { ApiResponse, HealthResponse } from '@stuartshay/otel-types';
+import type { paths } from '@stuartshay/otel-types';
 import { authService } from './auth';
+
+// Extract response types from OpenAPI schema
+type HealthResponse = paths['/health']['get']['responses']['200']['content']['*/*'];
+type ReadyResponse = paths['/ready']['get']['responses']['200']['content']['*/*'];
+type InfoResponse = paths['/info']['get']['responses']['200']['content']['*/*'];
+type ChainResponse = paths['/chain']['get']['responses']['200']['content']['*/*'];
+type ErrorResponse = paths['/error']['get']['responses']['500']['content']['*/*'];
+type SlowResponse = paths['/slow']['get']['responses']['200']['content']['*/*'];
+
+// Generic API response type with trace ID (for custom endpoints)
+export type ApiResponse = {
+  trace_id?: string;
+  status?: string;
+  message?: string;
+  [key: string]: unknown;
+};
 
 /**
  * API Client Service for otel-demo backend
@@ -10,7 +26,7 @@ import { authService } from './auth';
  * - Axios instance with base URL configuration
  * - Request interceptor for Authorization header
  * - Response interceptor for 401/403 handling
- * - Type-safe endpoints using @stuartshay/otel-types
+ * - Type-safe endpoints using @stuartshay/otel-types OpenAPI schema
  * - Trace ID extraction from x-trace-id header
  */
 
@@ -125,17 +141,17 @@ class ApiService {
    * Readiness check endpoint
    * GET /ready
    */
-  async ready(): Promise<{ status: string }> {
+  async ready(): Promise<ReadyResponse> {
     const response = await this.client.get('/ready');
     return response.data;
   }
 
   /**
    * Get service information
-   * GET /
+   * GET /info
    */
-  async getServiceInfo(): Promise<ApiResponse> {
-    const response: AxiosResponse<ApiResponse> = await this.client.get('/');
+  async getServiceInfo(): Promise<InfoResponse> {
+    const response: AxiosResponse<InfoResponse> = await this.client.get('/info');
     return response.data;
   }
 
@@ -143,8 +159,8 @@ class ApiService {
    * Chain demo - Nested spans demonstration
    * GET /chain
    */
-  async getChainDemo(): Promise<ApiResponse> {
-    const response: AxiosResponse<ApiResponse> = await this.client.get('/chain');
+  async getChainDemo(): Promise<ChainResponse> {
+    const response: AxiosResponse<ChainResponse> = await this.client.get('/chain');
     return response.data;
   }
 
@@ -152,8 +168,8 @@ class ApiService {
    * Error demo - Trigger error for testing
    * GET /error
    */
-  async getErrorDemo(): Promise<ApiResponse> {
-    const response: AxiosResponse<ApiResponse> = await this.client.get('/error');
+  async getErrorDemo(): Promise<ErrorResponse> {
+    const response: AxiosResponse<ErrorResponse> = await this.client.get('/error');
     return response.data;
   }
 
@@ -161,8 +177,8 @@ class ApiService {
    * Slow endpoint demo - Latency testing
    * GET /slow
    */
-  async getSlowDemo(): Promise<ApiResponse> {
-    const response: AxiosResponse<ApiResponse> = await this.client.get('/slow');
+  async getSlowDemo(): Promise<SlowResponse> {
+    const response: AxiosResponse<SlowResponse> = await this.client.get('/slow');
     return response.data;
   }
 

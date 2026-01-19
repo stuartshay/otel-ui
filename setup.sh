@@ -18,7 +18,6 @@ echo ""
 
 # Required Node.js version
 REQUIRED_NODE_VERSION="24"
-REQUIRED_NODE_FULL="24.0.0"  # Node.js 24 LTS
 
 # Check git
 echo -e "${YELLOW}Checking git...${NC}"
@@ -36,6 +35,7 @@ echo -e "${YELLOW}Checking nvm...${NC}"
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
     # Load nvm
     export NVM_DIR="$HOME/.nvm"
+    # shellcheck source=/dev/null
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     echo -e "${GREEN}✓ nvm found${NC}"
     
@@ -58,6 +58,7 @@ else
     
     # Load nvm for current session
     export NVM_DIR="$HOME/.nvm"
+    # shellcheck source=/dev/null
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     
     if [ -s "$HOME/.nvm/nvm.sh" ]; then
@@ -101,12 +102,46 @@ if command -v shellcheck &> /dev/null; then
     SHELLCHECK_VERSION=$(shellcheck --version | grep version: | awk '{print $2}')
     echo -e "${GREEN}✓ shellcheck ${SHELLCHECK_VERSION}${NC}"
 else
-    echo -e "${YELLOW}⚠ shellcheck not found${NC}"
-    echo "  Install with:"
-    echo "    macOS: brew install shellcheck"
-    echo "    Ubuntu/Debian: sudo apt-get install shellcheck"
-    echo "    Arch: sudo pacman -S shellcheck"
-    echo "  Or download from: https://github.com/koalaman/shellcheck"
+    echo -e "${YELLOW}⚠ shellcheck not found, attempting to install...${NC}"
+    
+    # Detect OS and install
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        if command -v brew &> /dev/null; then
+            echo "Installing with Homebrew..."
+            brew install shellcheck
+        else
+            echo -e "${RED}Error: Homebrew not found${NC}"
+            echo "Install Homebrew from: https://brew.sh/"
+            echo "Then run: brew install shellcheck"
+        fi
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux
+        if command -v apt-get &> /dev/null; then
+            echo "Installing with apt-get..."
+            sudo apt-get update && sudo apt-get install -y shellcheck
+        elif command -v pacman &> /dev/null; then
+            echo "Installing with pacman..."
+            sudo pacman -S --noconfirm shellcheck
+        elif command -v dnf &> /dev/null; then
+            echo "Installing with dnf..."
+            sudo dnf install -y shellcheck
+        else
+            echo -e "${YELLOW}⚠ Unable to auto-install shellcheck${NC}"
+            echo "Download from: https://github.com/koalaman/shellcheck"
+        fi
+    else
+        echo -e "${YELLOW}⚠ Unsupported OS for auto-install${NC}"
+        echo "Download from: https://github.com/koalaman/shellcheck"
+    fi
+    
+    # Verify installation
+    if command -v shellcheck &> /dev/null; then
+        SHELLCHECK_VERSION=$(shellcheck --version | grep version: | awk '{print $2}')
+        echo -e "${GREEN}✓ shellcheck ${SHELLCHECK_VERSION} installed${NC}"
+    else
+        echo -e "${YELLOW}⚠ shellcheck installation failed or skipped${NC}"
+    fi
 fi
 echo ""
 
