@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Callback Component
@@ -11,6 +12,7 @@ import { authService } from '../services/auth';
  */
 export default function Callback() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,6 +20,9 @@ export default function Callback() {
       try {
         // Handle the OAuth callback
         await authService.handleCallback();
+
+        // Refresh the auth context with the new user
+        await refreshUser();
 
         // Redirect to dashboard
         navigate('/dashboard', { replace: true });
@@ -33,7 +38,7 @@ export default function Callback() {
     };
 
     handleCallback();
-  }, [navigate]);
+  }, [navigate, refreshUser]);
 
   if (error) {
     return (

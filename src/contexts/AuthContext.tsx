@@ -20,6 +20,7 @@ interface AuthContextType {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
+  refreshUser: () => Promise<void>;
   userProfile: {
     email?: string;
     name?: string;
@@ -47,27 +48,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
   } | null>(null);
 
   /**
-   * Load user on mount and set up event listeners
+   * Load user from storage
+   */
+  const loadUser = async () => {
+    try {
+      const currentUser = await authService.getUser();
+      setUser(currentUser);
+
+      if (currentUser) {
+        const profile = await authService.getUserProfile();
+        setUserProfile(profile);
+      } else {
+        setUserProfile(null);
+      }
+    } catch (error) {
+      console.error('Error loading user:', error);
+      setUser(null);
+      setUserProfile(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Load user on mount
    */
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const currentUser = await authService.getUser();
-        setUser(currentUser);
-
-        if (currentUser) {
-          const profile = await authService.getUserProfile();
-          setUserProfile(profile);
-        }
-      } catch (error) {
-        console.error('Error loading user:', error);
-        setUser(null);
-        setUserProfile(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadUser();
   }, []);
 
@@ -109,6 +115,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return await authService.getAccessToken();
   };
 
+  /**
+   * Refresh user - call after callback or token refresh
+   */
+  const refreshUser = async () => {
+    await loadUser();
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: user !== null && !user.expired,
@@ -116,6 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     getAccessToken,
+    refreshUser,
     userProfile,
   };
 
