@@ -15,6 +15,17 @@
         .signinSilentCallback()
         .catch(error => {
           console.error('Silent renew callback error:', error);
+          // Store error for parent window to detect
+          try {
+            if (typeof sessionStorage !== 'undefined') {
+              sessionStorage.setItem('silent_renew_error', JSON.stringify({
+                error: error.message,
+                timestamp: new Date().toISOString()
+              }));
+            }
+          } catch (e) {
+            console.error('Failed to store silent renew error:', e);
+          }
         });
     </script>
   </body>

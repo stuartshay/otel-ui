@@ -62,7 +62,12 @@ test.describe('otel-ui Basic Functionality', () => {
     console.log('\n=== Page Content ===');
     console.log(bodyText);
 
-    // Basic assertion - page should have loaded something
+    // Strengthen assertions - verify actual page content
     expect(rootContent.length).toBeGreaterThan(0);
+
+    // Verify either login UI or welcome screen is present
+    const hasLoginUI = hasLoginButton > 0;
+    const hasWelcome = hasWelcomeText > 0;
+    expect(hasLoginUI || hasWelcome).toBe(true);
   });
 });
