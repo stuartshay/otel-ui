@@ -1,4 +1,5 @@
 import { UserManager, User, WebStorageStateStore } from 'oidc-client-ts';
+import { getConfig } from '../config/runtime';
 
 /**
  * Authentication Service using OAuth2/PKCE with AWS Cognito
@@ -10,15 +11,11 @@ import { UserManager, User, WebStorageStateStore } from 'oidc-client-ts';
  * - User session persistence
  */
 
-// Cognito configuration from environment variables
-const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN;
-const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID;
-const redirectUri = import.meta.env.VITE_COGNITO_REDIRECT_URI;
-const issuer = import.meta.env.VITE_COGNITO_ISSUER;
-
-if (!cognitoDomain || !clientId || !redirectUri || !issuer) {
-  throw new Error('Missing required Cognito environment variables. Check .env.local or .env file.');
-}
+// Cognito configuration from runtime config (supports ConfigMap injection)
+const cognitoDomain = getConfig('COGNITO_DOMAIN');
+const clientId = getConfig('COGNITO_CLIENT_ID');
+const redirectUri = getConfig('COGNITO_REDIRECT_URI');
+const issuer = getConfig('COGNITO_ISSUER');
 
 // Get origin safely (will be available when UserManager is instantiated)
 const getOrigin = () => {

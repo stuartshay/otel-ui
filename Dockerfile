@@ -27,6 +27,10 @@ FROM nginx:alpine
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Copy built React app from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
@@ -44,5 +48,5 @@ LABEL org.opencontainers.image.description="React frontend for otel-demo API"
 LABEL org.opencontainers.image.version="${APP_VERSION}"
 LABEL org.opencontainers.image.vendor="homelab"
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start with entrypoint script that generates config.js
+ENTRYPOINT ["/entrypoint.sh"]

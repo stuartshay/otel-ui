@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import type { paths } from '@stuartshay/otel-types';
 import { authService } from './auth';
+import { getConfig } from '../config/runtime';
 
 // Extract response types from OpenAPI schema
 export type HealthResponse = paths['/health']['get']['responses']['200']['content']['*/*'];
@@ -30,11 +31,7 @@ export type ApiResponse = {
  * - Trace ID extraction from x-trace-id header
  */
 
-const baseURL = import.meta.env.VITE_API_BASE_URL;
-
-if (!baseURL) {
-  throw new Error('VITE_API_BASE_URL environment variable is not set');
-}
+const baseURL = getConfig('API_BASE_URL');
 
 /**
  * Create Axios instance with default configuration
