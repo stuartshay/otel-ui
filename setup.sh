@@ -95,6 +95,21 @@ NPM_VERSION=$(npm --version)
 echo -e "${GREEN}✓ npm ${NPM_VERSION}${NC}"
 echo ""
 
+# Check shellcheck
+echo -e "${YELLOW}Checking shellcheck...${NC}"
+if command -v shellcheck &> /dev/null; then
+    SHELLCHECK_VERSION=$(shellcheck --version | grep version: | awk '{print $2}')
+    echo -e "${GREEN}✓ shellcheck ${SHELLCHECK_VERSION}${NC}"
+else
+    echo -e "${YELLOW}⚠ shellcheck not found${NC}"
+    echo "  Install with:"
+    echo "    macOS: brew install shellcheck"
+    echo "    Ubuntu/Debian: sudo apt-get install shellcheck"
+    echo "    Arch: sudo pacman -S shellcheck"
+    echo "  Or download from: https://github.com/koalaman/shellcheck"
+fi
+echo ""
+
 # Install dependencies
 echo -e "${YELLOW}Installing npm dependencies...${NC}"
 if npm install; then
@@ -114,7 +129,7 @@ if npm run prepare &>/dev/null; then
     if [ -f .husky/pre-commit ]; then
         chmod +x .husky/pre-commit
         echo -e "${GREEN}✓ Pre-commit hook configured${NC}"
-        echo -e "  Hooks enabled: ESLint + Prettier on staged files"
+        echo -e "  Hooks enabled: ESLint + Prettier + markdownlint + shellcheck on staged files"
     else
         echo -e "${YELLOW}⚠ Pre-commit hook not found${NC}"
     fi
@@ -171,6 +186,10 @@ if ! npm list typescript &>/dev/null; then
     MISSING_TOOLS+=("typescript")
 fi
 
+if ! npm list markdownlint-cli2 &>/dev/null; then
+    MISSING_TOOLS+=("markdownlint-cli2")
+fi
+
 if [ ${#MISSING_TOOLS[@]} -eq 0 ]; then
     echo -e "${GREEN}✓ All required tools installed:${NC}"
     echo "  - Husky (git hooks)"
@@ -178,6 +197,7 @@ if [ ${#MISSING_TOOLS[@]} -eq 0 ]; then
     echo "  - Prettier (code formatter)"
     echo "  - ESLint (code linter)"
     echo "  - TypeScript (type checker)"
+    echo "  - markdownlint-cli2 (markdown linter)"
 else
     echo -e "${RED}⚠ Missing tools: ${MISSING_TOOLS[*]}${NC}"
     echo "Run: npm install"
@@ -202,15 +222,22 @@ echo ""
 echo "Code Quality Commands:"
 echo "  npm run lint         - Run ESLint"
 echo "  npm run lint:fix     - Fix ESLint issues automatically"
+echo "  npm run lint:md      - Lint markdown files"
+echo "  npm run lint:md:fix  - Fix markdown lint issues"
+echo "  npm run lint:sh      - Lint shell scripts with shellcheck"
+echo "  npm run lint:all     - Run all linters"
 echo "  npm run format       - Format code with Prettier"
 echo "  npm run format:check - Check code formatting"
 echo "  npm run type-check   - TypeScript type checking"
 echo ""
 echo "Git Hooks:"
-echo "  Pre-commit: Automatically runs ESLint + Prettier on staged files"
+echo "  Pre-commit: Automatically runs ESLint + Prettier + markdownlint + shellcheck"
 echo ""
 echo "Environment:"
 echo "  Node.js: $(node --version)"
 echo "  npm: $(npm --version)"
 echo "  nvm: To switch versions use 'nvm use 24'"
+if command -v shellcheck &> /dev/null; then
+    echo "  shellcheck: $(shellcheck --version | grep version: | awk '{print $2}')"
+fi
 echo ""

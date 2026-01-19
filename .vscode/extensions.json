@@ -1,0 +1,32 @@
+{
+  "recommendations": [
+    // Essential
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+
+    // TypeScript
+    "ms-vscode.vscode-typescript-next",
+
+    // React
+    "dsznajder.es7-react-js-snippets",
+
+    // Markdown
+    "davidanson.vscode-markdownlint",
+    "yzhang.markdown-all-in-one",
+
+    // Shell
+    "timonwong.shellcheck",
+    "foxundermoon.shell-format",
+
+    // Docker
+    "ms-azuretools.vscode-docker",
+
+    // Git
+    "eamodio.gitlens",
+
+    // Utilities
+    "christian-kohler.path-intellisense",
+    "visualstudioexptteam.vscodeintellicode",
+    "gruntfuggly.todo-tree"
+  ]
+}
