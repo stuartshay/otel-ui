@@ -115,7 +115,7 @@ class AuthService {
       console.log('Login successful:', user.profile.email);
 
       // Redirect to original path or home
-      const returnUrl = user.state || '/';
+      const returnUrl = (typeof user.state === 'string' ? user.state : null) || '/';
       window.history.replaceState({}, document.title, returnUrl);
 
       return user;

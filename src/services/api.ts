@@ -4,12 +4,12 @@ import type { paths } from '@stuartshay/otel-types';
 import { authService } from './auth';
 
 // Extract response types from OpenAPI schema
-type HealthResponse = paths['/health']['get']['responses']['200']['content']['*/*'];
-type ReadyResponse = paths['/ready']['get']['responses']['200']['content']['*/*'];
-type InfoResponse = paths['/info']['get']['responses']['200']['content']['*/*'];
-type ChainResponse = paths['/chain']['get']['responses']['200']['content']['*/*'];
-type ErrorResponse = paths['/error']['get']['responses']['500']['content']['*/*'];
-type SlowResponse = paths['/slow']['get']['responses']['200']['content']['*/*'];
+export type HealthResponse = paths['/health']['get']['responses']['200']['content']['*/*'];
+export type ReadyResponse = paths['/ready']['get']['responses']['200']['content']['*/*'];
+export type InfoResponse = paths['/info']['get']['responses']['200']['content']['*/*'];
+export type ChainResponse = paths['/chain']['get']['responses']['200']['content']['*/*'];
+export type ErrorResponse = paths['/error']['get']['responses']['500']['content']['*/*'];
+export type SlowResponse = paths['/slow']['get']['responses']['200']['content']['*/*'];
 
 // Generic API response type with trace ID (for custom endpoints)
 export type ApiResponse = {

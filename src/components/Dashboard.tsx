@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
-import type { HealthResponse } from '@stuartshay/otel-types';
+import type { HealthResponse } from '../services/api';
 
 /**
  * Dashboard Component
@@ -159,7 +159,7 @@ export default function Dashboard() {
                   marginBottom: '20px',
                 }}
               >
-                Status: {healthStatus.status.toUpperCase()}
+                Status: {healthStatus.status?.toUpperCase() || 'UNKNOWN'}
               </div>
 
               <div style={{ marginTop: '20px' }}>
