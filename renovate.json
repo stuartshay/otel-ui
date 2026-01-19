@@ -18,15 +18,15 @@
     },
     {
       "description": "Group React packages",
-      "matchPackagePatterns": ["^react", "^@types/react"],
       "groupName": "react",
-      "groupSlug": "react"
+      "groupSlug": "react",
+      "matchPackageNames": ["/^react/", "/^@types/react/"]
     },
     {
       "description": "Group Vite packages",
-      "matchPackagePatterns": ["^vite", "^@vitejs"],
       "groupName": "vite",
-      "groupSlug": "vite"
+      "groupSlug": "vite",
+      "matchPackageNames": ["/^vite/", "/^@vitejs/"]
     },
     {
       "description": "Docker base image updates",
@@ -35,13 +35,12 @@
       "automerge": true
     }
   ],
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "description": "Update Node version in Dockerfile",
-      "fileMatch": ["Dockerfile$"],
-      "matchStrings": [
-        "FROM node:(?<currentValue>[\\d.]+)-alpine"
-      ],
+      "managerFilePatterns": ["/Dockerfile$/"],
+      "matchStrings": ["FROM node:(?<currentValue>[\\d.]+)-alpine"],
       "depNameTemplate": "node",
       "datasourceTemplate": "docker"
     }
