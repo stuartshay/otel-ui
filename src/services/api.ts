@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import type { ApiResponse, HealthResponse } from '@stuartshay/otel-types';
 import { authService } from './auth';
 

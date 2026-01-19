@@ -20,6 +20,15 @@ if (!cognitoDomain || !clientId || !redirectUri || !issuer) {
   throw new Error('Missing required Cognito environment variables. Check .env.local or .env file.');
 }
 
+// Get origin safely (will be available when UserManager is instantiated)
+const getOrigin = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  // Fallback for SSR or build time
+  return redirectUri.replace(/\/callback$/, '');
+};
+
 // UserManager configuration for OIDC client
 const userManagerConfig = {
   authority: issuer,
@@ -27,16 +36,22 @@ const userManagerConfig = {
   redirect_uri: redirectUri,
   response_type: 'code',
   scope: 'openid profile email',
-  post_logout_redirect_uri: window.location.origin,
+  get post_logout_redirect_uri() {
+    return getOrigin();
+  },
   userStore: new WebStorageStateStore({ store: window.localStorage }),
   automaticSilentRenew: true,
-  silent_redirect_uri: `${window.location.origin}/silent-renew.html`,
+  get silent_redirect_uri() {
+    return `${getOrigin()}/silent-renew.html`;
+  },
   metadata: {
     issuer: issuer,
     authorization_endpoint: `https://${cognitoDomain}/oauth2/authorize`,
     token_endpoint: `https://${cognitoDomain}/oauth2/token`,
     userinfo_endpoint: `https://${cognitoDomain}/oauth2/userInfo`,
-    end_session_endpoint: `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${window.location.origin}`,
+    get end_session_endpoint() {
+      return `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${getOrigin()}`;
+    },
   },
 };
 
