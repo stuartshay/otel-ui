@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Testing
+test-results/
+playwright-report/
+coverage/
+
 # Environment files
 .env
 .env.local
