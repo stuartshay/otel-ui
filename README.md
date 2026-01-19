@@ -31,20 +31,36 @@ npm run dev
 
 ## Development
 
+### Git Workflow
+
+- **main** - Production branch (protected, deploys to production)
+- **develop** - Development branch (active development happens here)
+- **feature/** - Feature branches (branch from develop, PR to develop)
+
+```bash
+# Start new work
+git checkout develop
+git pull origin develop
+git checkout -b feature/my-feature
+
+# When ready, create PR to develop
+# After review and merge, develop will be merged to main for release
+```
+
 ### Prerequisites
 
-- Node.js 20.x (recommend using [nvm](https://github.com/nvm-sh/nvm))
-- npm 10.x
+- Node.js 24.x (recommend using [nvm](https://github.com/nvm-sh/nvm))
+- npm 11.x
 
 ### Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server (port 5173) |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
-| `npx tsc --noEmit` | TypeScript type check |
+| Command            | Description                          |
+| ------------------ | ------------------------------------ |
+| `npm run dev`      | Start development server (port 5173) |
+| `npm run build`    | Build for production                 |
+| `npm run preview`  | Preview production build             |
+| `npm run lint`     | Run ESLint                           |
+| `npx tsc --noEmit` | TypeScript type check                |
 
 ## License
 

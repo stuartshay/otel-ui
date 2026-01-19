@@ -12,18 +12,32 @@ All automation, assistants, and developers must follow
 
 ## Quick Reference
 
-- **Lint before commit**: `npm run lint`
-- **Type check**: `npx tsc --noEmit`
+- **Development branch**: `develop` (default working branch)
+- **Production branch**: `main` (releases only)
+- **Lint before commit**: `npm run lint:all`
+- **Format code**: `npm run format`
+- **Type check**: `npm run type-check`
 - **Build**: `npm run build`
 - **Run dev**: `npm run dev`
 
 ## Development Workflow
 
-1. Make changes to components in `src/`
-2. Run `npm run lint` to check code style
-3. Run `npx tsc --noEmit` to verify types
-4. Test locally: `npm run dev`
-5. Commit and push
+**Branch Strategy:**
+
+- Work on `develop` branch for all changes
+- Create feature branches from `develop` for larger features
+- PR to `develop` for review
+- `main` is for releases only (merged from `develop`)
+
+**Development Steps:**
+
+1. Switch to develop: `git checkout develop && git pull`
+2. Make changes to components in `src/`
+3. Run `npm run lint:all` to check all code
+4. Run `npm run type-check` to verify types
+5. Test locally: `npm run dev`
+6. Commit (pre-commit hooks will run)
+7. Push to `develop` or create PR
 
 ## Project Structure
 
