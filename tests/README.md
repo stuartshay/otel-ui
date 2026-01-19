@@ -31,6 +31,18 @@ Tests OAuth2/PKCE authentication with AWS Cognito:
 - Tests full login flow (requires credentials)
 - Validates single sign-in (no double login)
 
+### 4. Full Authentication Debug Test (`full-auth-debug.spec.ts`)
+
+Comprehensive authentication debugging test that captures every step:
+
+- Takes screenshots at each step of the auth flow
+- Captures all console logs, errors, and network requests
+- Monitors for "Not Authorized" messages
+- Detects automatic logout after login
+- Generates detailed report in `test-results/auth-flow/`
+
+**Use this test to debug authorization issues!**
+
 ## Running Tests
 
 ### Local Development
@@ -64,6 +76,21 @@ export COGNITO_TEST_USERNAME="your-test-user@example.com"
 export COGNITO_TEST_PASSWORD="your-password"
 npx playwright test --config=playwright.config.prod.ts
 ```
+
+### Debug Authentication Issues
+
+Run the full debug test with screenshots at every step:
+
+```bash
+export COGNITO_TEST_USERNAME="your-test-user@example.com"
+export COGNITO_TEST_PASSWORD="your-password"
+npx playwright test full-auth-debug.spec.ts --config=playwright.config.prod.ts
+```
+
+This will create:
+
+- **Screenshots**: `test-results/auth-flow/*.png` (one for each step)
+- **Detailed log**: `test-results/auth-flow/full-report.log`
 
 ### Specific Test Suites
 
