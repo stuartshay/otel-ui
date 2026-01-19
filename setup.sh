@@ -16,17 +16,74 @@ echo -e "${GREEN}otel-ui Setup${NC}"
 echo -e "${GREEN}=================================${NC}"
 echo ""
 
-# Check Node.js
-echo -e "${YELLOW}Checking Node.js...${NC}"
-if ! command -v node &> /dev/null; then
-    echo -e "${RED}Error: Node.js is not installed${NC}"
-    echo "Install Node.js 20.x: https://nodejs.org/"
-    echo "Recommended: Use nvm (Node Version Manager)"
+# Required Node.js version
+REQUIRED_NODE_VERSION="24"
+REQUIRED_NODE_FULL="24.0.0"  # Node.js 24 LTS
+
+# Check git
+echo -e "${YELLOW}Checking git...${NC}"
+if ! command -v git &> /dev/null; then
+    echo -e "${RED}Error: git is not installed${NC}"
+    echo "Install git: https://git-scm.com/downloads"
     exit 1
+fi
+GIT_VERSION=$(git --version)
+echo -e "${GREEN}✓ ${GIT_VERSION}${NC}"
+echo ""
+
+# Check if nvm is installed
+echo -e "${YELLOW}Checking nvm...${NC}"
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+    # Load nvm
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    echo -e "${GREEN}✓ nvm found${NC}"
+    
+    # Check if Node.js 24 is installed by trying to use it
+    echo -e "${YELLOW}Checking for Node.js ${REQUIRED_NODE_VERSION}...${NC}"
+    if ! nvm use --delete-prefix ${REQUIRED_NODE_VERSION} &>/dev/null; then
+        echo -e "${YELLOW}Installing Node.js ${REQUIRED_NODE_VERSION} LTS...${NC}"
+        nvm install ${REQUIRED_NODE_VERSION}
+        nvm use --delete-prefix ${REQUIRED_NODE_VERSION}
+        echo -e "${GREEN}✓ Node.js ${REQUIRED_NODE_VERSION} installed and activated${NC}"
+    else
+        echo -e "${GREEN}✓ Node.js ${REQUIRED_NODE_VERSION} already installed${NC}"
+        nvm use --delete-prefix ${REQUIRED_NODE_VERSION}
+        echo -e "${GREEN}✓ Switched to Node.js ${REQUIRED_NODE_VERSION}${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠ nvm not found${NC}"
+    echo "Installing nvm..."
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+    
+    # Load nvm for current session
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    
+    if [ -s "$HOME/.nvm/nvm.sh" ]; then
+        echo -e "${GREEN}✓ nvm installed${NC}"
+        echo -e "${YELLOW}Installing Node.js ${REQUIRED_NODE_VERSION} LTS...${NC}"
+        nvm install ${REQUIRED_NODE_VERSION}
+        nvm use --delete-prefix ${REQUIRED_NODE_VERSION}
+        echo -e "${GREEN}✓ Node.js ${REQUIRED_NODE_VERSION} installed and activated${NC}"
+    else
+        echo -e "${RED}Error: Failed to install nvm${NC}"
+        echo "Please install nvm manually: https://github.com/nvm-sh/nvm"
+        exit 1
+    fi
 fi
 
 NODE_VERSION=$(node --version)
 echo -e "${GREEN}✓ Node.js ${NODE_VERSION}${NC}"
+
+# Verify Node.js version
+NODE_MAJOR=$(node --version | cut -d. -f1 | sed 's/v//')
+if [ "$NODE_MAJOR" -lt "$REQUIRED_NODE_VERSION" ]; then
+    echo -e "${RED}Error: Node.js ${REQUIRED_NODE_VERSION}.x or higher is required${NC}"
+    echo "Current version: ${NODE_VERSION}"
+    echo "Please run: nvm install ${REQUIRED_NODE_VERSION} && nvm use ${REQUIRED_NODE_VERSION}"
+    exit 1
+fi
 
 # Check npm
 if ! command -v npm &> /dev/null; then
@@ -40,8 +97,30 @@ echo ""
 
 # Install dependencies
 echo -e "${YELLOW}Installing npm dependencies...${NC}"
-npm install
-echo -e "${GREEN}✓ Dependencies installed${NC}"
+if npm install; then
+    echo -e "${GREEN}✓ Dependencies installed${NC}"
+else
+    echo -e "${RED}Error: Failed to install npm dependencies${NC}"
+    exit 1
+fi
+echo ""
+
+# Initialize Husky
+echo -e "${YELLOW}Setting up Husky git hooks...${NC}"
+if npm run prepare &>/dev/null; then
+    echo -e "${GREEN}✓ Husky initialized${NC}"
+    
+    # Verify pre-commit hook exists
+    if [ -f .husky/pre-commit ]; then
+        chmod +x .husky/pre-commit
+        echo -e "${GREEN}✓ Pre-commit hook configured${NC}"
+        echo -e "  Hooks enabled: ESLint + Prettier on staged files"
+    else
+        echo -e "${YELLOW}⚠ Pre-commit hook not found${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠ Husky initialization failed${NC}"
+fi
 echo ""
 
 # Create .env.local if it doesn't exist
@@ -57,16 +136,53 @@ echo ""
 
 # Git hooks (if using pre-commit)
 if [ -f .pre-commit-config.yaml ]; then
-    echo -e "${YELLOW}Setting up pre-commit hooks...${NC}"
+    echo -e "${YELLOW}Setting up Python pre-commit hooks...${NC}"
     if command -v pre-commit &> /dev/null; then
         pre-commit install
-        echo -e "${GREEN}✓ Pre-commit hooks installed${NC}"
+        echo -e "${GREEN}✓ Python pre-commit hooks installed${NC}"
     else
-        echo -e "${YELLOW}⚠ pre-commit not found, skipping hooks setup${NC}"
+        echo -e "${YELLOW}⚠ pre-commit not found, skipping Python hooks${NC}"
         echo "  Install with: pip install pre-commit"
     fi
     echo ""
 fi
+
+# Verify critical tools
+echo -e "${YELLOW}Verifying installation...${NC}"
+MISSING_TOOLS=()
+
+if ! npm list husky &>/dev/null; then
+    MISSING_TOOLS+=("husky")
+fi
+
+if ! npm list lint-staged &>/dev/null; then
+    MISSING_TOOLS+=("lint-staged")
+fi
+
+if ! npm list prettier &>/dev/null; then
+    MISSING_TOOLS+=("prettier")
+fi
+
+if ! npm list eslint &>/dev/null; then
+    MISSING_TOOLS+=("eslint")
+fi
+
+if ! npm list typescript &>/dev/null; then
+    MISSING_TOOLS+=("typescript")
+fi
+
+if [ ${#MISSING_TOOLS[@]} -eq 0 ]; then
+    echo -e "${GREEN}✓ All required tools installed:${NC}"
+    echo "  - Husky (git hooks)"
+    echo "  - lint-staged (staged file linting)"
+    echo "  - Prettier (code formatter)"
+    echo "  - ESLint (code linter)"
+    echo "  - TypeScript (type checker)"
+else
+    echo -e "${RED}⚠ Missing tools: ${MISSING_TOOLS[*]}${NC}"
+    echo "Run: npm install"
+fi
+echo ""
 
 # Summary
 echo -e "${GREEN}=================================${NC}"
@@ -78,10 +194,23 @@ echo "  1. Review .env.local configuration"
 echo "  2. Run dev server: npm run dev"
 echo "  3. Build for production: npm run build"
 echo ""
-echo "Commands:"
-echo "  npm run dev        - Start development server"
-echo "  npm run build      - Build for production"
-echo "  npm run preview    - Preview production build"
-echo "  npm run lint       - Run ESLint"
-echo "  npx tsc --noEmit   - TypeScript type check"
+echo "Development Commands:"
+echo "  npm run dev          - Start development server"
+echo "  npm run build        - Build for production"
+echo "  npm run preview      - Preview production build"
+echo ""
+echo "Code Quality Commands:"
+echo "  npm run lint         - Run ESLint"
+echo "  npm run lint:fix     - Fix ESLint issues automatically"
+echo "  npm run format       - Format code with Prettier"
+echo "  npm run format:check - Check code formatting"
+echo "  npm run type-check   - TypeScript type checking"
+echo ""
+echo "Git Hooks:"
+echo "  Pre-commit: Automatically runs ESLint + Prettier on staged files"
+echo ""
+echo "Environment:"
+echo "  Node.js: $(node --version)"
+echo "  npm: $(npm --version)"
+echo "  nvm: To switch versions use 'nvm use 24'"
 echo ""
