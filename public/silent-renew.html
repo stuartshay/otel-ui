@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Silent Renew</title>
+  </head>
+  <body>
+    <script type="module">
+      import { UserManager } from 'oidc-client-ts';
+
+      // Silent token renewal - called in hidden iframe
+      new UserManager({
+        response_mode: 'query',
+      })
+        .signinSilentCallback()
+        .catch(error => {
+          console.error('Silent renew callback error:', error);
+          // Store error for parent window to detect
+          try {
+            if (typeof sessionStorage !== 'undefined') {
+              sessionStorage.setItem('silent_renew_error', JSON.stringify({
+                error: error.message,
+                timestamp: new Date().toISOString()
+              }));
+            }
+          } catch (e) {
+            console.error('Failed to store silent renew error:', e);
+          }
+        });
+    </script>
+  </body>
+</html>

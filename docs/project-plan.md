@@ -13,12 +13,14 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 ## Completed Tasks ✅
 
 ### 1. Repository Setup
+
 - [x] Initialize Vite + React + TypeScript project
 - [x] Create GitHub repository: `stuartshay/otel-ui`
 - [x] Configure git with main branch
 - [x] Initial commit pushed to GitHub (79acae2)
 
 ### 2. CI/CD Configuration
+
 - [x] GitHub Actions workflows
   - [x] `lint.yml` - ESLint, TypeScript check, build validation, security audit
   - [x] `docker.yml` - Multi-stage Docker build and push
@@ -26,6 +28,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 - [x] Pre-commit hooks configuration
 
 ### 3. Docker Configuration
+
 - [x] Multi-stage Dockerfile (Node 20-alpine → nginx:alpine)
 - [x] nginx configuration with SPA routing
 - [x] Docker Hub repository created: `stuartshay/otel-ui`
@@ -34,6 +37,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [x] `DOCKERHUB_TOKEN`
 
 ### 4. Dependencies
+
 - [x] Core packages installed:
   - [x] `@stuartshay/otel-types@1.0.59` - Type-safe API client
   - [x] `axios@1.7.9` - HTTP client
@@ -41,6 +45,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [x] `react-router-dom@7.2.1` - Client-side routing
 
 ### 5. Environment Configuration
+
 - [x] `.env` - Production configuration (ui.lab.informationcart.com)
 - [x] `.env.local` - Development configuration (localhost:5173)
 - [x] `.env.example` - Template for documentation
@@ -50,16 +55,47 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [x] Domain: `homelab-auth.auth.us-east-1.amazoncognito.com`
 
 ### 6. Documentation
+
 - [x] `README.md` - Project overview and quick start
 - [x] `AGENTS.md` - Agent operating guide
 - [x] `.github/copilot-instructions.md` - Development rules and workflows
 - [x] `setup.sh` - Automated development setup script
+- [x] `docs/project-plan.md` - Comprehensive Phase 2 project plan
+
+### 7. Development Tooling
+
+- [x] Node.js 24 LTS via nvm
+- [x] Pre-commit hooks with Husky + lint-staged
+- [x] Code formatting with Prettier
+- [x] ESLint configuration for React + TypeScript
+- [x] Markdown linting with markdownlint-cli2
+- [x] Shell script linting support (shellcheck)
+- [x] VS Code workspace configuration
+  - [x] `.vscode/settings.json` - Editor settings (format on save, ESLint auto-fix)
+  - [x] `.vscode/extensions.json` - 15 recommended extensions
+
+### 8. Dependency Management
+
+- [x] Renovate configuration for automated updates
+- [x] Resolved Renovate Dashboard issue #1:
+  - [x] Updated Node.js 20 → 24 (Dockerfile, workflows)
+  - [x] Updated GitHub Actions v4 → v6
+  - [x] Updated hadolint v3.1.0 → v3.3.0
+  - [x] Updated dockerhub-description v4 → v5
+  - [x] Updated globals v16 → v17
+
+### 9. Git Workflow
+
+- [x] Created `develop` branch for active development
+- [x] Updated documentation with branch strategy
+- [x] Configured `main` as production-only branch
 
 ---
 
 ## In Progress Tasks 🔄
 
-### 7. Authentication Service
+### 10. Authentication Service
+
 - [ ] Create `src/services/auth.ts`
   - [ ] Configure `UserManager` with Cognito settings
   - [ ] Implement PKCE flow (login, callback, logout)
@@ -68,6 +104,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [ ] Error handling and retry logic
 
 ### 8. API Client Service
+
 - [ ] Create `src/services/api.ts`
   - [ ] Axios instance with base URL configuration
   - [ ] Request interceptor for Authorization header
@@ -77,6 +114,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [ ] Trace ID extraction from `x-trace-id` header
 
 ### 9. React Context Providers
+
 - [ ] Create `src/contexts/AuthContext.tsx`
   - [ ] Auth state management (user, loading, authenticated)
   - [ ] Login/logout methods
@@ -90,13 +128,15 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 
 ## Pending Tasks 📋
 
-### 10. React Components
+### 13. React Components
 
 #### Core Components
+
 - [ ] `src/App.tsx` - Main application with routing
 - [ ] `src/main.tsx` - Update with context providers
 
 #### Authentication Components
+
 - [ ] `src/components/Login.tsx`
   - [ ] Login button with Cognito redirect
   - [ ] Loading state
@@ -108,6 +148,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [ ] Error handling
 
 #### Application Components
+
 - [ ] `src/components/Dashboard.tsx`
   - [ ] Protected route (requires auth)
   - [ ] Display user information
@@ -122,6 +163,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [ ] Redirect to login if not authenticated
 
 #### Data Display Components
+
 - [ ] `src/components/ServiceInfo.tsx`
   - [ ] Fetch and display service information from `/`
   - [ ] Show trace ID from API response
@@ -134,7 +176,8 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [ ] Show latency metrics
   - [ ] Display trace ID for investigation
 
-### 11. Styling
+### 14. Styling
+
 - [ ] Choose UI library (Material-UI, Chakra UI, or Tailwind CSS)
 - [ ] Create theme configuration
 - [ ] Implement responsive design
@@ -142,7 +185,8 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 - [ ] Add error states
 - [ ] Dark mode support (optional)
 
-### 12. Testing
+### 15. Testing
+
 - [ ] Local development testing
   - [ ] Start dev server: `npm run dev`
   - [ ] Test login flow with Cognito
@@ -158,7 +202,8 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [ ] Run container
   - [ ] Test endpoints
 
-### 13. Kubernetes Deployment
+### 16. Kubernetes Deployment
+
 - [ ] Create k8s-gitops manifests in `apps/base/otel-ui/`
   - [ ] `deployment.yaml` - nginx container with React build
   - [ ] `service.yaml` - ClusterIP service on port 80
@@ -174,12 +219,14 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [ ] Test login flow
   - [ ] Test API calls
 
-### 14. DNS Configuration
+### 17. DNS Configuration
+
 - [ ] Add DNS record for `ui.lab.informationcart.com`
   - [ ] Point to MetalLB IP: `192.168.1.100`
   - [ ] Verify DNS resolution
 
-### 15. End-to-End Testing
+### 18. End-to-End Testing
+
 - [ ] Test complete flow:
   - [ ] Navigate to https://ui.lab.informationcart.com
   - [ ] Click login → redirect to Cognito
@@ -193,7 +240,8 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
   - [ ] Verify trace context propagation
   - [ ] Check API response headers (x-trace-id)
 
-### 16. Documentation Updates
+### 19. Documentation Updates
+
 - [ ] Update `README.md` with:
   - [ ] Architecture diagram
   - [ ] Screenshots
@@ -214,23 +262,27 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 ## Future Enhancements 🚀
 
 ### Security
+
 - [ ] Implement Content Security Policy (CSP)
 - [ ] Add CSRF protection
 - [ ] Security headers audit
 
 ### Performance
+
 - [ ] Code splitting for routes
 - [ ] Lazy loading components
 - [ ] API response caching
 - [ ] Image optimization
 
 ### Observability
+
 - [ ] Add OpenTelemetry browser tracing
 - [ ] User interaction tracking
 - [ ] Error tracking (Sentry integration)
 - [ ] Real User Monitoring (RUM)
 
 ### Features
+
 - [ ] User settings page
 - [ ] Admin dashboard
 - [ ] API explorer/playground
@@ -241,36 +293,40 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 
 ## Technical Stack
 
-| Component | Technology | Version |
-|-----------|-----------|---------|
-| Framework | React | 19.x |
-| Build Tool | Vite | 7.3.1 |
-| Language | TypeScript | 5.7.x |
-| Router | React Router | 7.2.1 |
-| HTTP Client | Axios | 1.7.9 |
-| Auth Library | oidc-client-ts | 3.3.0 |
-| Type Package | @stuartshay/otel-types | 1.0.59 |
-| Container | nginx | alpine |
+| Component    | Technology             | Version |
+| ------------ | ---------------------- | ------- |
+| Framework    | React                  | 19.x    |
+| Build Tool   | Vite                   | 7.3.1   |
+| Language     | TypeScript             | 5.7.x   |
+| Router       | React Router           | 7.2.1   |
+| HTTP Client  | Axios                  | 1.7.9   |
+| Auth Library | oidc-client-ts         | 3.3.0   |
+| Type Package | @stuartshay/otel-types | 1.0.59  |
+| Container    | nginx                  | alpine  |
 
 ## Infrastructure
 
-| Resource | Value |
-|----------|-------|
-| GitHub Repo | stuartshay/otel-ui |
-| Docker Hub | stuartshay/otel-ui |
-| API Backend | https://otel.lab.informationcart.com |
-| Frontend URL | https://ui.lab.informationcart.com |
-| K8s Cluster | k8s-pi5-cluster |
-| K8s Namespace | otel-ui |
-| Cognito User Pool | us-east-1_ZL7M5Qa7K |
-| Cognito Client | 5j475mtdcm4qevh7q115qf1sfj (PKCE) |
+| Resource          | Value                                |
+| ----------------- | ------------------------------------ |
+| GitHub Repo       | stuartshay/otel-ui                   |
+| Docker Hub        | stuartshay/otel-ui                   |
+| API Backend       | https://otel.lab.informationcart.com |
+| Frontend URL      | https://ui.lab.informationcart.com   |
+| K8s Cluster       | k8s-pi5-cluster                      |
+| K8s Namespace     | otel-ui                              |
+| Cognito User Pool | us-east-1_ZL7M5Qa7K                  |
+| Cognito Client    | 5j475mtdcm4qevh7q115qf1sfj (PKCE)    |
 
 ---
 
 ## Success Criteria
 
 Phase 2 is complete when:
-- ✅ Repository infrastructure is set up
+
+- ✅ Repository infrastructure is set up (COMPLETE)
+- ✅ Development tooling configured (COMPLETE)
+- ✅ Git workflow established (COMPLETE)
+- ✅ CI/CD pipelines operational (COMPLETE)
 - [ ] User can login via Cognito
 - [ ] User can view dashboard after authentication
 - [ ] API calls include valid access tokens
@@ -283,6 +339,7 @@ Phase 2 is complete when:
 ## Next Phase Preview
 
 **Phase 3: otel-middleware (Python Workers)**
+
 - Celery worker service for background tasks
 - Redis StatefulSet for task queue
 - Full OpenTelemetry instrumentation
@@ -293,14 +350,14 @@ Phase 2 is complete when:
 
 ## Timeline Estimate
 
-| Task Group | Estimated Time |
-|------------|---------------|
-| Auth Service + API Client | 2-3 hours |
-| React Components | 3-4 hours |
-| Testing + Debugging | 1-2 hours |
-| K8s Deployment | 1-2 hours |
-| Documentation | 1 hour |
-| **Total** | **8-12 hours** |
+| Task Group                | Estimated Time |
+| ------------------------- | -------------- |
+| Auth Service + API Client | 2-3 hours      |
+| React Components          | 3-4 hours      |
+| Testing + Debugging       | 1-2 hours      |
+| K8s Deployment            | 1-2 hours      |
+| Documentation             | 1 hour         |
+| **Total**                 | **8-12 hours** |
 
 ---
 
