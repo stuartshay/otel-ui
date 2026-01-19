@@ -1,73 +1,51 @@
-# React + TypeScript + Vite
+# otel-ui
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![Build](https://github.com/stuartshay/otel-ui/actions/workflows/docker.yml/badge.svg)](https://github.com/stuartshay/otel-ui/actions/workflows/docker.yml)
+[![Lint](https://github.com/stuartshay/otel-ui/actions/workflows/lint.yml/badge.svg)](https://github.com/stuartshay/otel-ui/actions/workflows/lint.yml)
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-stuartshay%2Fotel--ui-blue?logo=docker)](https://hub.docker.com/repository/docker/stuartshay/otel-ui)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Currently, two official plugins are available:
+React frontend for the [otel-demo](https://github.com/stuartshay/otel-demo) API with OAuth2 authentication.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Overview
 
-## React Compiler
+A modern React + TypeScript frontend that consumes the otel-demo Flask API, featuring:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **OAuth2/PKCE Authentication** - AWS Cognito integration
+- **Type-safe API Client** - Uses [@stuartshay/otel-types](https://www.npmjs.com/package/@stuartshay/otel-types)
+- **Distributed Tracing** - Displays trace IDs from API responses
+- **Responsive Design** - Mobile-friendly UI
+- **Docker Deployment** - nginx container for K8s
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+# Run setup script
+./setup.sh
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# Start development server
+npm run dev
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Open http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Node.js 20.x (recommend using [nvm](https://github.com/nvm-sh/nvm))
+- npm 10.x
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server (port 5173) |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run ESLint |
+| `npx tsc --noEmit` | TypeScript type check |
+
+## License
+
+MIT

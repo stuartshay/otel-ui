@@ -1,0 +1,49 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "docker:enableMajor",
+    ":disableRateLimiting"
+  ],
+  "labels": ["dependencies", "renovate"],
+  "timezone": "America/New_York",
+  "schedule": ["before 6am on monday"],
+  "packageRules": [
+    {
+      "description": "Auto-merge patch updates for npm packages",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Group React packages",
+      "matchPackagePatterns": ["^react", "^@types/react"],
+      "groupName": "react",
+      "groupSlug": "react"
+    },
+    {
+      "description": "Group Vite packages",
+      "matchPackagePatterns": ["^vite", "^@vitejs"],
+      "groupName": "vite",
+      "groupSlug": "vite"
+    },
+    {
+      "description": "Docker base image updates",
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    }
+  ],
+  "regexManagers": [
+    {
+      "description": "Update Node version in Dockerfile",
+      "fileMatch": ["Dockerfile$"],
+      "matchStrings": [
+        "FROM node:(?<currentValue>[\\d.]+)-alpine"
+      ],
+      "depNameTemplate": "node",
+      "datasourceTemplate": "docker"
+    }
+  ]
+}
