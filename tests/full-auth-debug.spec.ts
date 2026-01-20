@@ -123,7 +123,7 @@ test.describe('Full Auth Flow with Screenshots', () => {
     console.log('STEP 4: Wait for Cognito redirect');
     console.log('========================================\n');
 
-    await page.waitForURL(/cognito.*oauth2\/authorize/, { timeout: 15000 });
+    await page.waitForURL(/cognito.*\/login/, { timeout: 15000 });
     await page.waitForLoadState('networkidle');
 
     await page.screenshot({
@@ -150,14 +150,16 @@ test.describe('Full Auth Flow with Screenshots', () => {
     console.log('STEP 5: Enter credentials');
     console.log('========================================\n');
 
-    await page.fill('input[name="username"]', TEST_USERNAME);
+    // Wait for the login form to be visible and use visible input
+    await page.waitForSelector('input[name="username"]:visible', { timeout: 10000 });
+    await page.fill('input[name="username"]:visible', TEST_USERNAME);
     console.log('Filled username');
     await page.screenshot({
       path: 'test-results/auth-flow/05-username-filled.png',
       fullPage: true,
     });
 
-    await page.fill('input[name="password"]', TEST_PASSWORD);
+    await page.fill('input[name="password"]:visible', TEST_PASSWORD);
     console.log('Filled password');
     await page.screenshot({
       path: 'test-results/auth-flow/06-password-filled.png',
@@ -169,7 +171,7 @@ test.describe('Full Auth Flow with Screenshots', () => {
     console.log('STEP 6: Submit login form');
     console.log('========================================\n');
 
-    await page.click('input[type="submit"]');
+    await page.click('input[type="submit"]:visible');
     console.log('Clicked submit button');
 
     console.log('\n========================================');
@@ -286,6 +288,56 @@ test.describe('Full Auth Flow with Screenshots', () => {
         });
         break;
       }
+    }
+
+    console.log('\n========================================');
+    console.log('STEP 11: Test logout button');
+    console.log('========================================\n');
+
+    // Click logout button
+    const logoutButton = page.locator('button:has-text("Logout")');
+    await expect(logoutButton).toBeVisible();
+    console.log('Logout button found');
+
+    await page.screenshot({
+      path: 'test-results/auth-flow/11-before-logout.png',
+      fullPage: true,
+    });
+
+    await logoutButton.click();
+    console.log('Clicked logout button');
+
+    // Wait for redirect (either to Cognito logout or directly to login)
+    try {
+      await page.waitForURL(/cognito.*\/logout/, { timeout: 3000 });
+      console.log('✅ Redirected to Cognito logout endpoint');
+      await page.screenshot({
+        path: 'test-results/auth-flow/11-cognito-logout.png',
+        fullPage: true,
+      });
+    } catch {
+      console.log('⚠️ No Cognito logout redirect, checking direct redirect...');
+    }
+
+    // Should redirect back to login
+    await page.waitForURL('https://ui.lab.informationcart.com/login', { timeout: 10000 });
+    console.log('✅ Redirected to login page after logout');
+
+    await page.screenshot({
+      path: 'test-results/auth-flow/11-after-logout.png',
+      fullPage: true,
+    });
+
+    // Verify localStorage is cleared
+    const hasUserAfterLogout = await page.evaluate(() => {
+      const keys = Object.keys(localStorage);
+      return keys.some(k => k.includes('oidc.user'));
+    });
+
+    if (!hasUserAfterLogout) {
+      console.log('✅ Session cleared from localStorage');
+    } else {
+      console.log('⚠️ Session still in localStorage after logout');
     }
 
     console.log('\n========================================');
