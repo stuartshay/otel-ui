@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,9 +14,17 @@ export default function Callback() {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const callbackProcessed = useRef(false);
 
   useEffect(() => {
+    // Prevent processing callback multiple times (React Strict Mode or rerenders)
+    if (callbackProcessed.current) {
+      return;
+    }
+
     const handleCallback = async () => {
+      callbackProcessed.current = true;
+
       try {
         // Handle the OAuth callback
         await authService.handleCallback();
