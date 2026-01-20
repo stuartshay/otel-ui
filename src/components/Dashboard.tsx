@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
-import type { HealthResponse } from '../services/api';
+import type { HealthResponse, InfoResponse } from '../services/api';
+import Layout from './Layout';
+import '../styles/Dashboard.css';
 
 /**
  * Dashboard Component
@@ -10,194 +12,195 @@ import type { HealthResponse } from '../services/api';
  * Displays user information and API health status
  */
 export default function Dashboard() {
-  const { userProfile, logout } = useAuth();
+  const { userProfile } = useAuth();
   const [healthStatus, setHealthStatus] = useState<HealthResponse | null>(null);
+  const [serviceInfo, setServiceInfo] = useState<InfoResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchHealth = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const health = await apiService.health();
+        const [health, info] = await Promise.all([
+          apiService.health(),
+          apiService.getServiceInfo(),
+        ]);
         setHealthStatus(health);
+        setServiceInfo(info);
         setError(null);
       } catch (err) {
-        console.error('Error fetching health:', err);
-        setError('Failed to fetch API health status');
+        console.error('Error fetching data:', err);
+        setError('Failed to fetch API status');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchHealth();
+    fetchData();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
-  };
-
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Header */}
-      <header
-        style={{
-          backgroundColor: '#fff',
-          borderBottom: '1px solid #ddd',
-          padding: '20px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <h1 style={{ margin: 0, fontSize: '24px' }}>otel-ui Dashboard</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
-                {userProfile?.name || userProfile?.email || 'User'}
-              </div>
-              <div style={{ fontSize: '12px', color: '#666' }}>{userProfile?.email}</div>
-            </div>
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: '8px 16px',
-                fontSize: '14px',
-                color: '#fff',
-                backgroundColor: '#dc3545',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = '#c82333';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = '#dc3545';
-              }}
-            >
-              Logout
-            </button>
+    <Layout>
+      <div className="dashboard">
+        {loading && (
+          <div className="loading-container">
+            <div className="spinner-large"></div>
+            <p>Loading dashboard data...</p>
           </div>
-        </div>
-      </header>
+        )}
 
-      {/* Main Content */}
-      <main style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px' }}>
-        {/* Welcome Card */}
-        <div
-          style={{
-            backgroundColor: '#fff',
-            padding: '30px',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            marginBottom: '30px',
-          }}
-        >
-          <h2 style={{ marginTop: 0 }}>Welcome, {userProfile?.name || 'User'}!</h2>
-          <p style={{ color: '#666', marginBottom: '20px' }}>
-            You are successfully authenticated with AWS Cognito.
-          </p>
-          <div style={{ display: 'flex', gap: '20px', fontSize: '14px' }}>
+        {error && (
+          <div className="alert alert-error">
+            <span className="alert-icon">⚠️</span>
             <div>
-              <strong>Email:</strong> {userProfile?.email}
-            </div>
-            <div>
-              <strong>User ID:</strong> {userProfile?.sub}
+              <strong>Error</strong>
+              <p>{error}</p>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* API Health Status Card */}
-        <div
-          style={{
-            backgroundColor: '#fff',
-            padding: '30px',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h2 style={{ marginTop: 0 }}>API Health Status</h2>
-
-          {loading && <p>Loading health status...</p>}
-
-          {error && (
-            <div
-              style={{
-                padding: '15px',
-                backgroundColor: '#fee',
-                border: '1px solid #fcc',
-                borderRadius: '4px',
-                color: '#c33',
-              }}
-            >
-              {error}
+        {!loading && !error && (
+          <>
+            {/* Welcome Section */}
+            <div className="welcome-section">
+              <div className="welcome-avatar">
+                {(userProfile?.name?.[0] || userProfile?.email?.[0] || 'U').toUpperCase()}
+              </div>
+              <div className="welcome-content">
+                <h2>Welcome back, {userProfile?.name || 'User'}! 👋</h2>
+                <p>You're successfully authenticated and ready to explore.</p>
+              </div>
             </div>
-          )}
 
-          {healthStatus && (
-            <div>
-              <div
-                style={{
-                  display: 'inline-block',
-                  padding: '8px 16px',
-                  backgroundColor: healthStatus.status === 'healthy' ? '#d4edda' : '#f8d7da',
-                  color: healthStatus.status === 'healthy' ? '#155724' : '#721c24',
-                  borderRadius: '4px',
-                  fontWeight: 'bold',
-                  marginBottom: '20px',
-                }}
-              >
-                Status: {healthStatus.status?.toUpperCase() || 'UNKNOWN'}
+            {/* Stats Grid */}
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon" style={{ backgroundColor: '#e7f3ff', color: '#0066cc' }}>
+                  👤
+                </div>
+                <div className="stat-content">
+                  <div className="stat-label">User Email</div>
+                  <div className="stat-value">{userProfile?.email || 'N/A'}</div>
+                </div>
               </div>
 
-              <div style={{ marginTop: '20px' }}>
-                <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Details</h3>
-                <pre
+              <div className="stat-card">
+                <div className="stat-icon" style={{ backgroundColor: '#fff3cd', color: '#856404' }}>
+                  🆔
+                </div>
+                <div className="stat-content">
+                  <div className="stat-label">User ID</div>
+                  <div className="stat-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                    {userProfile?.sub?.substring(0, 18) || 'N/A'}...
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-card">
+                <div
+                  className="stat-icon"
                   style={{
-                    backgroundColor: '#f5f5f5',
-                    padding: '15px',
-                    borderRadius: '4px',
-                    overflow: 'auto',
-                    fontSize: '14px',
+                    backgroundColor: healthStatus?.status === 'healthy' ? '#d4edda' : '#f8d7da',
+                    color: healthStatus?.status === 'healthy' ? '#155724' : '#721c24',
                   }}
                 >
-                  {JSON.stringify(healthStatus, null, 2)}
-                </pre>
+                  {healthStatus?.status === 'healthy' ? '✅' : '❌'}
+                </div>
+                <div className="stat-content">
+                  <div className="stat-label">API Status</div>
+                  <div className="stat-value">
+                    {healthStatus?.status?.toUpperCase() || 'UNKNOWN'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-icon" style={{ backgroundColor: '#e7f5e7', color: '#28a745' }}>
+                  🚀
+                </div>
+                <div className="stat-content">
+                  <div className="stat-label">Service Version</div>
+                  <div className="stat-value">
+                    {serviceInfo?.version || serviceInfo?.app_version || 'N/A'}
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Info Card */}
-        <div
-          style={{
-            backgroundColor: '#e7f3ff',
-            padding: '20px',
-            borderRadius: '8px',
-            marginTop: '30px',
-            border: '1px solid #b3d9ff',
-          }}
-        >
-          <h3 style={{ marginTop: 0, color: '#004085' }}>Next Steps</h3>
-          <ul style={{ color: '#004085', margin: 0 }}>
-            <li>Explore API endpoints and trace IDs</li>
-            <li>View distributed tracing in New Relic</li>
-            <li>Test token refresh and session management</li>
-          </ul>
-        </div>
-      </main>
-    </div>
+            {/* Quick Actions */}
+            <div className="quick-actions">
+              <h3>Quick Actions</h3>
+              <div className="action-grid">
+                <a href="/testing" className="action-card">
+                  <span className="action-icon">🧪</span>
+                  <div className="action-content">
+                    <h4>OTel Testing</h4>
+                    <p>Test API endpoints and view trace IDs</p>
+                  </div>
+                </a>
+
+                <a
+                  href="https://otel.lab.informationcart.com/apidocs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-card"
+                >
+                  <span className="action-icon">📚</span>
+                  <div className="action-content">
+                    <h4>API Documentation</h4>
+                    <p>Explore OpenAPI specs</p>
+                  </div>
+                </a>
+
+                <a
+                  href="https://one.newrelic.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-card"
+                >
+                  <span className="action-icon">📊</span>
+                  <div className="action-content">
+                    <h4>New Relic</h4>
+                    <p>View distributed traces</p>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            {/* Service Info */}
+            {serviceInfo && (
+              <div className="info-card">
+                <h3>📡 Service Information</h3>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <span className="info-label">Service Name:</span>
+                    <span className="info-value">{serviceInfo.service || 'otel-demo'}</span>
+                  </div>
+                  {serviceInfo.environment && (
+                    <div className="info-item">
+                      <span className="info-label">Environment:</span>
+                      <span className="info-value">{serviceInfo.environment}</span>
+                    </div>
+                  )}
+                  {serviceInfo.version && (
+                    <div className="info-item">
+                      <span className="info-label">Version:</span>
+                      <span className="info-value">{serviceInfo.version}</span>
+                    </div>
+                  )}
+                  {serviceInfo.traceId && (
+                    <div className="info-item">
+                      <span className="info-label">Trace ID:</span>
+                      <code className="info-value">{serviceInfo.traceId}</code>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </Layout>
   );
 }
