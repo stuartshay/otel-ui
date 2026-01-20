@@ -55,12 +55,6 @@ const userManagerConfig = {
       return `https://${cognitoDomain}/logout`;
     },
   },
-  // Cognito logout parameters
-  extraQueryParams: {
-    get logout_uri() {
-      return getOrigin();
-    },
-  },
 };
 
 // Create UserManager instance
@@ -138,12 +132,7 @@ class AuthService {
    */
   async logout(): Promise<void> {
     try {
-      await this.userManager.signoutRedirect({
-        extraQueryParams: {
-          client_id: clientId,
-          logout_uri: getOrigin(),
-        },
-      });
+      await this.userManager.signoutRedirect();
     } catch (error) {
       console.error('Logout error:', error);
       // Clear local storage even if redirect fails
