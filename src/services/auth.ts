@@ -52,7 +52,13 @@ const userManagerConfig = {
     token_endpoint: `https://${cognitoDomain}/oauth2/token`,
     userinfo_endpoint: `https://${cognitoDomain}/oauth2/userInfo`,
     get end_session_endpoint() {
-      return `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${getOrigin()}`;
+      return `https://${cognitoDomain}/logout`;
+    },
+  },
+  // Cognito logout parameters
+  extraQueryParams: {
+    get logout_uri() {
+      return getOrigin();
     },
   },
 };
@@ -132,7 +138,12 @@ class AuthService {
    */
   async logout(): Promise<void> {
     try {
-      await this.userManager.signoutRedirect();
+      await this.userManager.signoutRedirect({
+        extraQueryParams: {
+          client_id: clientId,
+          logout_uri: getOrigin(),
+        },
+      });
     } catch (error) {
       console.error('Logout error:', error);
       // Clear local storage even if redirect fails
