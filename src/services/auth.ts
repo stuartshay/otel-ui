@@ -51,7 +51,8 @@ const userManagerConfig = {
   get post_logout_redirect_uri() {
     return getOrigin();
   },
-  userStore: stateStore, // Use singleton instance
+  userStore: stateStore, // Use singleton for user data persistence
+  stateStore: stateStore, // CRITICAL: Use same singleton for OAuth state
   automaticSilentRenew: true,
   get silent_redirect_uri() {
     return `${getOrigin()}/silent-renew.html`;
