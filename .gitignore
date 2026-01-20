@@ -17,6 +17,13 @@ test-results/
 playwright-report/
 coverage/
 
+# Debug and test scripts (temporary files)
+debug-ui.mjs
+run-auth-test.sh
+run-debug-test.sh
+test-local-auth.sh
+run-logout-test.sh
+
 # Environment files
 .env
 .env.local

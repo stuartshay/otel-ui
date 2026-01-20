@@ -19,7 +19,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@stuartshay/otel-types": "^1.0.59",
+    "@stuartshay/otel-types": "^1.0.64",
     "axios": "^1.13.2",
     "oidc-client-ts": "^3.4.1",
     "react": "^19.2.0",
@@ -29,7 +29,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.57.0",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.10.9",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
@@ -43,7 +43,7 @@
     "playwright": "^1.57.0",
     "prettier": "^3.8.0",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.4",
+    "typescript-eslint": "^8.53.1",
     "vite": "^7.2.4"
   },
   "lint-staged": {
