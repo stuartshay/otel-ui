@@ -26,6 +26,18 @@ const getOrigin = () => {
   return redirectUri.replace(/\/callback$/, '');
 };
 
+// Create singleton WebStorageStateStore to avoid recreating instances
+const createStateStore = () => {
+  if (typeof window === 'undefined') {
+    return undefined; // SSR - let oidc-client-ts use default
+  }
+  return new WebStorageStateStore({
+    store: window.localStorage,
+  });
+};
+
+const stateStore = createStateStore();
+
 // UserManager configuration for OIDC client
 const userManagerConfig = {
   authority: issuer,
@@ -36,12 +48,8 @@ const userManagerConfig = {
   get post_logout_redirect_uri() {
     return getOrigin();
   },
-  get userStore() {
-    // Lazy initialization to avoid SSR issues
-    return new WebStorageStateStore({
-      store: typeof window !== 'undefined' ? window.localStorage : ({} as Storage),
-    });
-  },
+  userStore: stateStore, // Use singleton for user data persistence
+  stateStore: stateStore, // CRITICAL: Use same singleton for OAuth state
   automaticSilentRenew: true,
   get silent_redirect_uri() {
     return `${getOrigin()}/silent-renew.html`;

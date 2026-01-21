@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Login from './components/Login';
 import Callback from './components/Callback';
 import Dashboard from './components/Dashboard';
+import OTelTesting from './components/OTelTesting';
 import ProtectedRoute from './components/ProtectedRoute';
 
 /**
@@ -25,6 +26,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/testing"
+            element={
+              <ProtectedRoute>
+                <OTelTesting />
               </ProtectedRoute>
             }
           />

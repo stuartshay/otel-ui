@@ -17,6 +17,8 @@ A modern React + TypeScript frontend that consumes the otel-demo Flask API, feat
 - **Responsive Design** - Mobile-friendly UI
 - **Docker Deployment** - nginx container for K8s
 
+**Deployment Status**: Version 1.0.23 deployed to [ui.lab.informationcart.com](https://ui.lab.informationcart.com)
+
 ## Quick Start
 
 ```bash
@@ -52,15 +54,79 @@ git checkout -b feature/my-feature
 - Node.js 24.x (recommend using [nvm](https://github.com/nvm-sh/nvm))
 - npm 11.x
 
+### Environment Configuration
+
+**Production** (`.env`):
+
+- API: `https://otel.lab.informationcart.com`
+- Auth: `https://ui.lab.informationcart.com/callback`
+- Used for Docker builds
+
+**Development** (`.env.local`):
+
+- API: `http://localhost:8080`
+- Auth: `http://localhost:5173/callback`
+- Copy from `.env.example` and customize
+
 ### Commands
 
-| Command            | Description                          |
-| ------------------ | ------------------------------------ |
-| `npm run dev`      | Start development server (port 5173) |
-| `npm run build`    | Build for production                 |
-| `npm run preview`  | Preview production build             |
-| `npm run lint`     | Run ESLint                           |
-| `npx tsc --noEmit` | TypeScript type check                |
+| Command               | Description                          |
+| --------------------- | ------------------------------------ |
+| `npm run dev`         | Start development server (port 5173) |
+| `npm run build`       | Build for production                 |
+| `npm run preview`     | Preview production build             |
+| `npm run lint:all`    | Run all linters (ESLint + Markdown)  |
+| `npm run format`      | Format code with Prettier            |
+| `npm run type-check`  | TypeScript type check                |
+| `npx playwright test` | Run end-to-end tests                 |
+
+## Infrastructure
+
+| Resource       | Value                                |
+| -------------- | ------------------------------------ |
+| Production URL | https://ui.lab.informationcart.com   |
+| API Backend    | https://otel.lab.informationcart.com |
+| K8s Cluster    | k8s-pi5-cluster                      |
+| Namespace      | otel-ui                              |
+| Docker Hub     | stuartshay/otel-ui                   |
+
+## Troubleshooting
+
+### Local Development
+
+**Cannot connect to API**:
+
+- Ensure otel-demo is running: `cd ../otel-demo && python run.py`
+- Check `.env.local` has `VITE_API_BASE_URL=http://localhost:8080`
+- Verify CORS is enabled in otel-demo `.env`
+
+**Authentication issues**:
+
+- Clear localStorage: `localStorage.clear()` in browser console
+- Hard refresh: `Ctrl+Shift+R` (or `Cmd+Shift+R` on Mac)
+- Check Cognito redirect URI matches `.env.local`
+
+**Build errors**:
+
+```bash
+# Clean and reinstall
+rm -rf node_modules package-lock.json dist
+npm install
+npm run build
+```
+
+## Documentation
+
+- [Project Plan](docs/project-plan.md) - Implementation roadmap
+- [Cleanup Guide](docs/project-cleanup.md) - File organization
+- [Auth Debug Findings](docs/AUTH_DEBUG_FINDINGS.md) - OAuth troubleshooting
+- [Copilot Instructions](.github/copilot-instructions.md) - Development rules
+
+## Related Repositories
+
+- [otel-demo](https://github.com/stuartshay/otel-demo) - Flask API backend
+- [k8s-gitops](https://github.com/stuartshay/k8s-gitops) - Kubernetes manifests
+- [@stuartshay/otel-types](https://github.com/stuartshay/otel-types) - TypeScript types
 
 ## License
 
