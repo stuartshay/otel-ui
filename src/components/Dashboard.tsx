@@ -121,9 +121,7 @@ export default function Dashboard() {
                 </div>
                 <div className="stat-content">
                   <div className="stat-label">Service Version</div>
-                  <div className="stat-value">
-                    {serviceInfo?.version || serviceInfo?.app_version || 'N/A'}
-                  </div>
+                  <div className="stat-value">{serviceInfo?.version || 'N/A'}</div>
                 </div>
               </div>
             </div>
@@ -177,22 +175,17 @@ export default function Dashboard() {
                     <span className="info-label">Service Name:</span>
                     <span className="info-value">{serviceInfo.service || 'otel-demo'}</span>
                   </div>
-                  {serviceInfo.environment && (
-                    <div className="info-item">
-                      <span className="info-label">Environment:</span>
-                      <span className="info-value">{serviceInfo.environment}</span>
-                    </div>
-                  )}
+
                   {serviceInfo.version && (
                     <div className="info-item">
                       <span className="info-label">Version:</span>
                       <span className="info-value">{serviceInfo.version}</span>
                     </div>
                   )}
-                  {serviceInfo.traceId && (
+                  {serviceInfo.trace_id && (
                     <div className="info-item">
                       <span className="info-label">Trace ID:</span>
-                      <code className="info-value">{serviceInfo.traceId}</code>
+                      <code className="info-value">{serviceInfo.trace_id}</code>
                     </div>
                   )}
                 </div>

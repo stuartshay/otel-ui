@@ -218,44 +218,50 @@ export default function OTelTesting() {
                 </button>
 
                 {/* Results Section */}
-                {result && result.status !== 'idle' && (
-                  <div className={`result-section ${result.status}`}>
-                    {/* Status Badge */}
-                    <div className="result-header">
-                      <span className={`status-badge ${result.status}`}>
-                        {result.status === 'loading' && '⏳ Loading'}
-                        {result.status === 'success' && '✅ Success'}
-                        {result.status === 'error' && '❌ Error'}
-                      </span>
-                      {result.duration !== undefined && (
-                        <span className="duration-badge">{result.duration}ms</span>
-                      )}
+                {(() => {
+                  if (!result || result.status === 'idle') return null;
+
+                  return (
+                    <div className={`result-section ${result.status}`}>
+                      {/* Status Badge */}
+                      <div className="result-header">
+                        <span className={`status-badge ${result.status}`}>
+                          {result.status === 'loading' ? '⏳ Loading' : null}
+                          {result.status === 'success' ? '✅ Success' : null}
+                          {result.status === 'error' ? '❌ Error' : null}
+                        </span>
+                        {result.duration !== undefined ? (
+                          <span className="duration-badge">{result.duration}ms</span>
+                        ) : null}
+                      </div>
+
+                      {/* Trace ID */}
+                      {result.traceId ? (
+                        <div className="trace-id">
+                          <span className="trace-label">🔍 Trace ID:</span>
+                          <code className="trace-value">{result.traceId}</code>
+                        </div>
+                      ) : null}
+
+                      {/* Error Message */}
+                      {result.error ? (
+                        <div className="error-message">
+                          <strong>Error:</strong> {result.error}
+                        </div>
+                      ) : null}
+
+                      {/* Response Data */}
+                      {result.data ? (
+                        <details className="response-details">
+                          <summary>View Response Data</summary>
+                          <pre className="response-data">
+                            {JSON.stringify(result.data, null, 2)}
+                          </pre>
+                        </details>
+                      ) : null}
                     </div>
-
-                    {/* Trace ID */}
-                    {result.traceId && (
-                      <div className="trace-id">
-                        <span className="trace-label">🔍 Trace ID:</span>
-                        <code className="trace-value">{result.traceId}</code>
-                      </div>
-                    )}
-
-                    {/* Error Message */}
-                    {result.error && (
-                      <div className="error-message">
-                        <strong>Error:</strong> {result.error}
-                      </div>
-                    )}
-
-                    {/* Response Data */}
-                    {result.data && (
-                      <details className="response-details">
-                        <summary>View Response Data</summary>
-                        <pre className="response-data">{JSON.stringify(result.data, null, 2)}</pre>
-                      </details>
-                    )}
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })}
