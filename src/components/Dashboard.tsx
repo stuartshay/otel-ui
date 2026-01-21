@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import type { HealthResponse, InfoResponse } from '../services/api';
@@ -130,13 +131,13 @@ export default function Dashboard() {
             <div className="quick-actions">
               <h3>Quick Actions</h3>
               <div className="action-grid">
-                <a href="/testing" className="action-card">
+                <Link to="/testing" className="action-card">
                   <span className="action-icon">🧪</span>
                   <div className="action-content">
                     <h4>OTel Testing</h4>
                     <p>Test API endpoints and view trace IDs</p>
                   </div>
-                </a>
+                </Link>
 
                 <a
                   href="https://otel.lab.informationcart.com/apidocs"
