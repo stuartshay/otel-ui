@@ -68,18 +68,10 @@ test.describe.skip('Database Endpoints - UI Tests (requires auth)', () => {
     // Wait for the result to appear
     await expect(locationsCard.locator('.result-section')).toBeVisible({ timeout: 10000 });
 
-    // The endpoint should return an error (table doesn't exist) but with a proper HTTP response
-    const statusBadge = locationsCard.locator('.status-badge.error');
+    // The endpoint should now return success with owntracks database
+    const statusBadge = locationsCard.locator('.status-badge.success');
     await expect(statusBadge).toBeVisible();
-    await expect(statusBadge).toContainText('Error');
-
-    // Verify error message is displayed
-    const errorMessage = locationsCard.locator('.error-message');
-    await expect(errorMessage).toBeVisible();
-
-    // Should contain helpful error message about missing table
-    const errorText = await errorMessage.textContent();
-    expect(errorText).toMatch(/table|location|schema|exist/i);
+    await expect(statusBadge).toContainText('Success');
 
     // Verify response details
     const responseDetails = locationsCard.locator('.response-details');
@@ -89,9 +81,11 @@ test.describe.skip('Database Endpoints - UI Tests (requires auth)', () => {
     const responseData = locationsCard.locator('.response-data');
     await expect(responseData).toBeVisible();
 
-    // Verify JSON structure
+    // Verify JSON structure contains locations array
     const jsonText = await responseData.textContent();
-    expect(jsonText).toContain('"status": "error"');
+    expect(jsonText).toContain('"locations"');
+    expect(jsonText).toContain('"count"');
+    expect(jsonText).toContain('"limit"');
     expect(jsonText).toContain('"trace_id"');
   });
 
@@ -137,11 +131,9 @@ test.describe.skip('Database Endpoints - UI Tests (requires auth)', () => {
     const locationsCard = page.locator('.endpoint-card').filter({ hasText: 'Database Locations' });
     await expect(locationsCard.locator('.result-section')).toBeVisible();
 
-    // Verify /db/status succeeded
+    // Verify both endpoints succeeded
     await expect(statusCard.locator('.status-badge.success')).toBeVisible();
-
-    // Verify /db/locations returned error (expected behavior)
-    await expect(locationsCard.locator('.status-badge.error')).toBeVisible();
+    await expect(locationsCard.locator('.status-badge.success')).toBeVisible();
   });
 
   test('should show response timing for database endpoints', async ({ page }) => {
@@ -176,18 +168,41 @@ test.describe('Database Endpoints - Direct API Tests', () => {
     expect(data.trace_id).toMatch(/^[0-9a-f]{32}$/);
   });
 
-  test('should call /db/locations directly and return 404', async ({ request }) => {
-    const response = await request.get(`${API_BASE_URL}/db/locations`);
-    expect(response.status()).toBe(404);
+  test('should call /db/locations directly and return 200', async ({ request }) => {
+    const response = await request.get(`${API_BASE_URL}/db/locations?limit=2`);
+    expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(200);
 
     const data = await response.json();
-    expect(data).toHaveProperty('status', 'error');
-    expect(data).toHaveProperty('error');
-    expect(data).toHaveProperty('database');
+    expect(data).toHaveProperty('count');
+    expect(data).toHaveProperty('limit', 2);
+    expect(data).toHaveProperty('offset', 0);
+    expect(data).toHaveProperty('sort');
+    expect(data).toHaveProperty('order');
+    expect(data).toHaveProperty('locations');
     expect(data).toHaveProperty('trace_id');
 
-    // Verify error message mentions table/schema issue
-    expect(data.error).toMatch(/table|location|schema|exist/i);
+    // Verify locations array structure
+    expect(Array.isArray(data.locations)).toBeTruthy();
+    if (data.locations.length > 0) {
+      const location = data.locations[0];
+      // Verify all 15 fields are present
+      expect(location).toHaveProperty('id');
+      expect(location).toHaveProperty('device_id');
+      expect(location).toHaveProperty('tid');
+      expect(location).toHaveProperty('latitude');
+      expect(location).toHaveProperty('longitude');
+      expect(location).toHaveProperty('accuracy');
+      expect(location).toHaveProperty('altitude');
+      expect(location).toHaveProperty('velocity');
+      expect(location).toHaveProperty('battery');
+      expect(location).toHaveProperty('battery_status');
+      expect(location).toHaveProperty('connection_type');
+      expect(location).toHaveProperty('trigger');
+      expect(location).toHaveProperty('timestamp');
+      expect(location).toHaveProperty('created_at');
+      expect(location).toHaveProperty('raw_payload');
+    }
 
     // Verify trace ID format
     expect(data.trace_id).toMatch(/^[0-9a-f]{32}$/);
@@ -222,14 +237,21 @@ test.describe('Database Endpoints - Direct API Tests', () => {
 
   test('should test /db/locations with query parameters', async ({ request }) => {
     const response = await request.get(
-      `${API_BASE_URL}/db/locations?limit=10&offset=0&sort=created_at&order=desc`
+      `${API_BASE_URL}/db/locations?limit=5&offset=0&sort=timestamp&order=desc`
     );
 
-    // Should still return 404 (table doesn't exist)
-    expect(response.status()).toBe(404);
+    // Should return 200 with owntracks database
+    expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(200);
 
     const data = await response.json();
-    expect(data).toHaveProperty('status', 'error');
+    expect(data).toHaveProperty('count');
+    expect(data).toHaveProperty('limit', 5);
+    expect(data).toHaveProperty('offset', 0);
+    expect(data).toHaveProperty('sort', 'timestamp');
+    expect(data).toHaveProperty('order', 'desc');
+    expect(data).toHaveProperty('locations');
     expect(data).toHaveProperty('trace_id');
+    expect(Array.isArray(data.locations)).toBeTruthy();
   });
 });
