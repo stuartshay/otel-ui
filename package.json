@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --fix",
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\" \"#node_modules\"",
-    "lint:sh": "if [ \"$CI\" = \"true\" ]; then shellcheck setup.sh; else shellcheck setup.sh || echo '⚠️  Warning: shellcheck reported issues in setup.sh'; fi",
+    "lint:sh": "if [ \"$CI\" = \"true\" ]; then shellcheck *.sh; else shellcheck *.sh || echo '⚠️  Warning: shellcheck reported issues'; fi",
     "lint:all": "npm run lint && npm run lint:md && npm run lint:sh",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css}\" \"**/*.md\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css}\" \"**/*.md\"",
