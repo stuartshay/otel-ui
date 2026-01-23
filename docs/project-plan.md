@@ -90,18 +90,19 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 - [x] Updated documentation with branch strategy
 - [x] Configured `main` as production-only branch
 
+### 10. Authentication Service
+
+- [x] Create `src/services/auth.ts`
+  - [x] Configure `UserManager` with Cognito settings
+  - [x] Implement PKCE flow (login, callback, logout)
+  - [x] Token management (access, refresh, expiry)
+  - [x] User session persistence
+  - [x] Error handling and retry logic
+  - [x] Fixed logout redirect_uri parameter (v1.0.32)
+
 ---
 
 ## In Progress Tasks 🔄
-
-### 10. Authentication Service
-
-- [ ] Create `src/services/auth.ts`
-  - [ ] Configure `UserManager` with Cognito settings
-  - [ ] Implement PKCE flow (login, callback, logout)
-  - [ ] Token management (access, refresh, expiry)
-  - [ ] User session persistence
-  - [ ] Error handling and retry logic
 
 ### 8. API Client Service
 
@@ -303,6 +304,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 | Auth Library | oidc-client-ts         | 3.3.0   |
 | Type Package | @stuartshay/otel-types | 1.0.59  |
 | Container    | nginx                  | alpine  |
+| Version      | Deployed               | 1.0.32  |
 
 ## Infrastructure
 
