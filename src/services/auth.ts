@@ -60,7 +60,8 @@ const userManagerConfig = {
     token_endpoint: `https://${cognitoDomain}/oauth2/token`,
     userinfo_endpoint: `https://${cognitoDomain}/oauth2/userInfo`,
     get end_session_endpoint() {
-      return `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(getOrigin())}`;
+      const origin = getOrigin();
+      return `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(origin)}&redirect_uri=${encodeURIComponent(origin)}`;
     },
   },
 };
