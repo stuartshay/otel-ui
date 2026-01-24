@@ -59,12 +59,7 @@ const userManagerConfig = {
     authorization_endpoint: `https://${cognitoDomain}/oauth2/authorize`,
     token_endpoint: `https://${cognitoDomain}/oauth2/token`,
     userinfo_endpoint: `https://${cognitoDomain}/oauth2/userInfo`,
-    get end_session_endpoint() {
-      const origin = getOrigin();
-      // Cognito logout endpoint format:
-      // https://DOMAIN/logout?client_id=xxx&logout_uri=yyy
-      return `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(origin)}`;
-    },
+    // Don't specify end_session_endpoint - we'll handle logout manually
   },
 };
 
