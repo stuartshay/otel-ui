@@ -32,6 +32,11 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Generated version: ${VERSION}"
 
+      - name: Update version in project files
+        run: |
+          bash scripts/update-version.sh ${{ steps.version.outputs.version }}
+          echo "✓ Updated VERSION and package.json to ${{ steps.version.outputs.version }}"
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:

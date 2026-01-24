@@ -29,6 +29,9 @@ run-logout-test.sh
 .env.local
 .env.*.local
 
+# Build-time generated files
+VERSION
+
 # Editor directories and files
 !.vscode/*
 !.vscode/extensions.json
