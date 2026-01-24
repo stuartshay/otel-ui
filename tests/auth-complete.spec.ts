@@ -140,7 +140,11 @@ test.describe('Complete Authentication Flow', () => {
     expect(user.access_token).toBeTruthy();
 
     console.log('✓ Tokens stored correctly in localStorage');
-    console.log('  - access_token:', user.access_token.substring(0, 20) + '...');
+    console.log(
+      '  - access_token: [REDACTED] (length:',
+      String(user.access_token).length,
+      'chars)'
+    );
     console.log('  - token_type:', user.token_type);
     console.log('  - expires_at:', new Date(user.expires_at * 1000).toISOString());
   });
@@ -196,8 +200,11 @@ test.describe('Complete Authentication Flow', () => {
     await logoutButton.click();
 
     // Should redirect to Cognito logout endpoint
-    // Wait for either Cognito logout page or redirect back home
-    await page.waitForTimeout(2000); // Give time for redirect
+    // Wait for either Cognito logout page or redirect back home (event-driven)
+    await Promise.race([
+      page.waitForURL(url => url.includes('cognito'), { timeout: 3000 }).catch(() => null),
+      page.waitForURL(url => !url.includes('cognito'), { timeout: 3000 }).catch(() => null),
+    ]);
 
     const currentUrl = page.url();
     console.log('  - After logout click, URL:', currentUrl);
@@ -247,7 +254,11 @@ test.describe('Complete Authentication Flow', () => {
     // Logout
     const logoutButton = page.locator('button:has-text("Logout"), button:has-text("Sign out")');
     await logoutButton.click();
-    await page.waitForTimeout(2000);
+    // Wait for logout redirect (event-driven)
+    await Promise.race([
+      page.waitForURL(url => url.includes('cognito'), { timeout: 3000 }).catch(() => null),
+      page.waitForURL(/\/login/, { timeout: 3000 }).catch(() => null),
+    ]);
     if (page.url().includes('cognito')) {
       await page.waitForURL(url => !url.includes('cognito'), { timeout: 10000 });
     }
@@ -301,15 +312,19 @@ test.describe('Authentication Error Handling', () => {
     await page.goto(`${BASE_URL}/callback`);
 
     // Should redirect to login or show error
-    await page.waitForTimeout(2000);
+    const errorMessage = page.locator('text=/error|invalid/i');
+
+    // Wait for either a redirect to the login page or an error message to appear
+    await Promise.race([
+      page.waitForURL(/\/login/, { timeout: 5000 }),
+      errorMessage.waitFor({ state: 'visible', timeout: 5000 }).catch(() => undefined),
+    ]);
+
     const url = page.url();
 
     // Should either be on login page or show an error
     const isOnLogin = url.includes('/login');
-    const hasError = await page
-      .locator('text=/error|invalid/i')
-      .isVisible()
-      .catch(() => false);
+    const hasError = await errorMessage.isVisible().catch(() => false);
 
     expect(isOnLogin || hasError).toBeTruthy();
 
