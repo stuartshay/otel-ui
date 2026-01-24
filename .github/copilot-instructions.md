@@ -16,22 +16,33 @@ React frontend for consuming the otel-demo API with OAuth2 authentication via AW
 
 ## Target Infrastructure
 
-| Property | Value |
-|----------|-------|
-| API Backend | https://otel.lab.informationcart.com |
-| Frontend URL | https://ui.lab.informationcart.com |
-| Auth Provider | AWS Cognito (PKCE flow) |
-| K8s Cluster | k8s-pi5-cluster |
-| Namespace | otel-ui |
+| Property      | Value                                |
+| ------------- | ------------------------------------ |
+| API Backend   | https://otel.lab.informationcart.com |
+| Frontend URL  | https://ui.lab.informationcart.com   |
+| Auth Provider | AWS Cognito (PKCE flow)              |
+| K8s Cluster   | k8s-pi5-cluster                      |
+| Namespace     | otel-ui                              |
 
 ## Development Workflow
 
-1. Run `npm install` to install dependencies
-2. Configure `.env.local` with API and Cognito settings
-3. Run `npm run dev` for development server
-4. Run `npm run lint` before commit
-5. Run `npm run build` to test production build
-6. Push to trigger CI/CD pipeline
+### Branch Strategy
+
+- **main**: Protected branch, production-only (PR required)
+- **develop**: Primary development branch (work here by default)
+- **feature/\***: Feature branches (optional for large changes)
+
+### Daily Workflow
+
+1. Work on `develop` branch for all changes
+2. Run `npm install` to install dependencies
+3. Configure `.env.local` with API and Cognito settings
+4. Run `npm run dev` for development server
+5. Run `npm run lint` before commit
+6. Commit and push to `develop`
+7. Create PR from `develop` → `main` when ready to deploy
+8. Merge PR triggers CI/CD pipeline
+9. GitHub Actions auto-generates version and builds Docker image
 
 ## Writing Code
 
