@@ -27,7 +27,20 @@ jobs:
         run: npm run lint
 
       - name: TypeScript Check
-        run: npx tsc --noEmit
+        run: npm run type-check
+
+      - name: Markdown Lint
+        run: npm run lint:md
+
+      - name: Format Check
+        run: npm run format:check
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Lint Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All linting checks completed" >> $GITHUB_STEP_SUMMARY
 
   build:
     name: Build Check

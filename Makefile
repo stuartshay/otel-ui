@@ -65,7 +65,7 @@ preview: ## Preview production build locally
 
 lint: ## Run all linters (ESLint, markdownlint, shellcheck)
 	@echo "$(YELLOW)Running linters...$(NC)"
-	@npm run lint:all
+	@npm run lint:all --silent
 	@echo "$(GREEN)✓ Linting complete$(NC)"
 
 lint-fix: ## Fix linting issues automatically
