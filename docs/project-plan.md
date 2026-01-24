@@ -90,18 +90,19 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 - [x] Updated documentation with branch strategy
 - [x] Configured `main` as production-only branch
 
+### 10. Authentication Service
+
+- [x] Create `src/services/auth.ts`
+  - [x] Configure `UserManager` with Cognito settings
+  - [x] Implement PKCE flow (login, callback, logout)
+  - [x] Token management (access, refresh, expiry)
+  - [x] User session persistence
+  - [x] Error handling and retry logic
+  - [x] Fixed logout redirect_uri parameter (v1.0.32)
+
 ---
 
 ## In Progress Tasks 🔄
-
-### 10. Authentication Service
-
-- [ ] Create `src/services/auth.ts`
-  - [ ] Configure `UserManager` with Cognito settings
-  - [ ] Implement PKCE flow (login, callback, logout)
-  - [ ] Token management (access, refresh, expiry)
-  - [ ] User session persistence
-  - [ ] Error handling and retry logic
 
 ### 8. API Client Service
 
@@ -303,6 +304,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 | Auth Library | oidc-client-ts         | 3.3.0   |
 | Type Package | @stuartshay/otel-types | 1.0.59  |
 | Container    | nginx                  | alpine  |
+| Version      | Deployed               | 1.0.32  |
 
 ## Infrastructure
 
@@ -327,6 +329,7 @@ Phase 2 is complete when:
 - ✅ Development tooling configured (COMPLETE)
 - ✅ Git workflow established (COMPLETE)
 - ✅ CI/CD pipelines operational (COMPLETE)
+- ✅ Authentication service implemented (COMPLETE)
 - [ ] User can login via Cognito
 - [ ] User can view dashboard after authentication
 - [ ] API calls include valid access tokens
@@ -336,9 +339,83 @@ Phase 2 is complete when:
 
 ---
 
-## Next Phase Preview
+## Future Releases 🚀
 
-**Phase 3: otel-middleware (Python Workers)**
+### Phase 2.1: Browser Tracing (v1.1.0)
+
+**Target**: Q1 2026 | **Effort**: 2-3 hours
+
+Add OpenTelemetry browser instrumentation for full-stack distributed tracing.
+
+**Scope**:
+
+- Install `@opentelemetry/sdk-trace-web` packages
+- Configure browser tracer in `src/main.tsx`
+- Add fetch/XHR auto-instrumentation
+- Export traces to New Relic browser endpoint
+- Implement trace context propagation to backend
+- Add user interaction tracking (clicks, navigation)
+
+**Benefits**:
+
+- See complete traces: User click → React → API → Database
+- Monitor client-side performance (Core Web Vitals)
+- Correlate frontend errors with backend traces
+- Real User Monitoring (RUM) capabilities
+
+**Dependencies**: Requires completed React UI (Phase 2)
+
+---
+
+### Phase 2.2: Platform Improvements (v1.2.0)
+
+**Target**: Q1 2026 | **Effort**: 6-8 hours
+
+Kubernetes platform maturity improvements from [k8s-gitops TODO.md](../../k8s-gitops/docs/TODO.md).
+
+#### Alerting (High Priority - 2-3 hours)
+
+- Deploy Alertmanager
+- Configure alert rules:
+  - Node down / not ready
+  - Pod crash loops
+  - Certificate expiry warnings
+  - High resource usage
+- Integrate with notification channels (email, Slack)
+
+#### OpenTelemetry Infrastructure (Medium Priority - 4-6 hours)
+
+- Deploy OTel Collector DaemonSet
+- Replace Fluent Bit with OTel for log collection
+- Unified observability pipeline:
+  - Metrics (existing)
+  - Logs (new OTel)
+  - Traces (existing from apps)
+- Configure New Relic as single backend
+- Create instrumented sample apps
+
+#### Backup & Recovery (High Priority - 2-3 hours)
+
+- Deploy Velero for cluster backups
+- Configure backup schedules (daily)
+- Test restore procedures
+- Migrate Sealed Secrets backup to CronJob
+- Document disaster recovery procedures
+
+**Benefits**:
+
+- Production-ready operations
+- Proactive issue detection
+- Disaster recovery capability
+- Simplified observability pipeline
+
+**Dependencies**: Independent of otel-ui development
+
+---
+
+### Phase 3: otel-middleware (Python Workers)
+
+**Target**: Q2 2026 | **Effort**: TBD
 
 - Celery worker service for background tasks
 - Redis StatefulSet for task queue
@@ -350,20 +427,34 @@ Phase 2 is complete when:
 
 ## Timeline Estimate
 
-| Task Group                | Estimated Time |
-| ------------------------- | -------------- |
-| Auth Service + API Client | 2-3 hours      |
-| React Components          | 3-4 hours      |
-| Testing + Debugging       | 1-2 hours      |
-| K8s Deployment            | 1-2 hours      |
-| Documentation             | 1 hour         |
-| **Total**                 | **8-12 hours** |
+### Phase 2 (Current - React UI)
+
+| Task Group             | Estimated Time  |
+| ---------------------- | --------------- |
+| ✅ Auth Service        | 2-3 hours       |
+| API Client + Context   | 2-3 hours       |
+| React Components       | 4-5 hours       |
+| UI Library Integration | 2-3 hours       |
+| Testing + Debugging    | 1-2 hours       |
+| **Total**              | **11-16 hours** |
+
+### Future Releases
+
+| Release | Focus                 | Effort    |
+| ------- | --------------------- | --------- |
+| v1.1.0  | Browser Tracing       | 2-3 hours |
+| v1.2.0  | Platform Improvements | 6-8 hours |
+| v2.0.0  | otel-middleware       | TBD       |
 
 ---
 
 ## Related Documentation
 
 - [otel-demo API Documentation](https://otel.lab.informationcart.com/apidocs)
+- [Authentication Guide](authentication.md)
+- [Enhancement Workflow Skill](../.github/skills/enhancement-workflow/SKILL.md) - Standard workflow for features/fixes
+- [otel-ui Deployment Skill](../.github/skills/otel-ui-deployment/SKILL.md) - Complete deployment workflow
+- [k8s-gitops TODO](../../k8s-gitops/docs/TODO.md)
 - [Multi-Repo Implementation Plan](../../otel-demo/docs/multi-repo-implementation-plan.md)
 - [AWS Cognito Configuration](../../homelab-infrastructure/docs/operations.md)
 - [K8s GitOps Workflow](../../k8s-gitops/README.md)

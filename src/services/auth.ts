@@ -61,7 +61,9 @@ const userManagerConfig = {
     userinfo_endpoint: `https://${cognitoDomain}/oauth2/userInfo`,
     get end_session_endpoint() {
       const origin = getOrigin();
-      return `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(origin)}&redirect_uri=${encodeURIComponent(origin)}`;
+      // Cognito logout endpoint format:
+      // https://DOMAIN/logout?client_id=xxx&logout_uri=yyy
+      return `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(origin)}`;
     },
   },
 };
@@ -141,11 +143,18 @@ class AuthService {
    */
   async logout(): Promise<void> {
     try {
-      await this.userManager.signoutRedirect();
+      // Clear user session from oidc-client-ts
+      await this.userManager.removeUser();
+
+      // Build Cognito logout URL manually
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const logoutUrl = `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(origin)}`;
+
+      // Redirect to Cognito logout
+      window.location.href = logoutUrl;
     } catch (error) {
       console.error('Logout error:', error);
-      // Clear local storage even if redirect fails
-      await this.userManager.removeUser();
+      // Fallback: just go home
       window.location.href = '/';
     }
   }
