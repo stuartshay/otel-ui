@@ -143,7 +143,7 @@ class AuthService {
 
       // Build Cognito logout URL manually
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const logoutUrl = `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(origin)}`;
+      const logoutUrl = `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(origin + '/')}`;
 
       // Redirect to Cognito logout
       window.location.href = logoutUrl;
