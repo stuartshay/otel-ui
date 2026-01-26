@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Layout from './Layout';
+import { getConfig } from '../config/runtime';
 import '../styles/OwnTracks.css';
 
 interface Job {
@@ -19,6 +20,49 @@ interface Job {
   };
 }
 
+// Mock data for demonstration - will be replaced with real API calls
+const mockJobs: Job[] = [
+  {
+    job_id: 'job_2026-01-25_abc123',
+    status: 'completed',
+    date: '2026-01-25',
+    device_id: 'iphone_stuart',
+    queued_at: '2026-01-25T10:30:00Z',
+    completed_at: '2026-01-25T10:30:15Z',
+    result: {
+      total_distance_km: 42.5,
+      total_locations: 1440,
+      max_distance_km: 15.2,
+      min_distance_km: 0.1,
+      csv_path: 'distance_20260125_iphone_stuart.csv',
+      processing_time_ms: 1250,
+    },
+  },
+  {
+    job_id: 'job_2026-01-24_def456',
+    status: 'completed',
+    date: '2026-01-24',
+    device_id: '',
+    queued_at: '2026-01-24T08:15:00Z',
+    completed_at: '2026-01-24T08:15:22Z',
+    result: {
+      total_distance_km: 58.3,
+      total_locations: 2880,
+      max_distance_km: 18.7,
+      min_distance_km: 0.0,
+      csv_path: 'distance_20260124.csv',
+      processing_time_ms: 2150,
+    },
+  },
+  {
+    job_id: 'job_2026-01-26_ghi789',
+    status: 'processing',
+    date: '2026-01-26',
+    device_id: '',
+    queued_at: '2026-01-26T12:00:00Z',
+  },
+];
+
 /**
  * OwnTracks Operations Component
  *
@@ -32,53 +76,9 @@ export default function OwnTracks() {
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  // Mock data for demonstration - will be replaced with real API calls
-  const mockJobs: Job[] = [
-    {
-      job_id: 'job_2026-01-25_abc123',
-      status: 'completed',
-      date: '2026-01-25',
-      device_id: 'iphone_stuart',
-      queued_at: '2026-01-25T10:30:00Z',
-      completed_at: '2026-01-25T10:30:15Z',
-      result: {
-        total_distance_km: 42.5,
-        total_locations: 1440,
-        max_distance_km: 15.2,
-        min_distance_km: 0.1,
-        csv_path: 'distance_20260125_iphone_stuart.csv',
-        processing_time_ms: 1250,
-      },
-    },
-    {
-      job_id: 'job_2026-01-24_def456',
-      status: 'completed',
-      date: '2026-01-24',
-      device_id: '',
-      queued_at: '2026-01-24T08:15:00Z',
-      completed_at: '2026-01-24T08:15:22Z',
-      result: {
-        total_distance_km: 58.3,
-        total_locations: 2880,
-        max_distance_km: 18.7,
-        min_distance_km: 0.0,
-        csv_path: 'distance_20260124.csv',
-        processing_time_ms: 2150,
-      },
-    },
-    {
-      job_id: 'job_2026-01-26_ghi789',
-      status: 'processing',
-      date: '2026-01-26',
-      device_id: '',
-      queued_at: '2026-01-26T12:00:00Z',
-    },
-  ];
-
   useEffect(() => {
     // TODO: Fetch real jobs from API
     setJobs(mockJobs);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCalculate = async () => {
@@ -104,7 +104,8 @@ export default function OwnTracks() {
   const handleDownloadCSV = (csvPath: string) => {
     // Use the existing CSV download proxy endpoint
     const filename = csvPath.split('/').pop() || csvPath;
-    const downloadUrl = `https://otel.lab.informationcart.com/download/${filename}`;
+    const apiBaseUrl = getConfig('API_BASE_URL');
+    const downloadUrl = `${apiBaseUrl}/download/${filename}`;
     window.open(downloadUrl, '_blank');
   };
 
@@ -196,20 +197,29 @@ export default function OwnTracks() {
         </div>
 
         {/* Tabs */}
-        <div className="tabs">
+        <div className="tabs" role="tablist">
           <button
+            role="tab"
+            aria-selected={activeTab === 'calculate'}
+            aria-controls="calculate-panel"
             className={`tab ${activeTab === 'calculate' ? 'active' : ''}`}
             onClick={() => setActiveTab('calculate')}
           >
             🎯 Calculate Distance
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'jobs'}
+            aria-controls="jobs-panel"
             className={`tab ${activeTab === 'jobs' ? 'active' : ''}`}
             onClick={() => setActiveTab('jobs')}
           >
             📋 Job History
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'analytics'}
+            aria-controls="analytics-panel"
             className={`tab ${activeTab === 'analytics' ? 'active' : ''}`}
             onClick={() => setActiveTab('analytics')}
           >
@@ -221,7 +231,12 @@ export default function OwnTracks() {
         <div className="tab-content">
           {/* Calculate Distance Tab */}
           {activeTab === 'calculate' && (
-            <div className="calculate-section">
+            <div
+              id="calculate-panel"
+              role="tabpanel"
+              aria-labelledby="calculate-tab"
+              className="calculate-section"
+            >
               <div className="form-card">
                 <h3>🚀 Start Distance Calculation</h3>
                 <p>Calculate distance-from-home metrics for OwnTracks GPS data</p>
@@ -274,21 +289,21 @@ export default function OwnTracks() {
               <div className="api-status-card">
                 <h3>🔌 API Status</h3>
                 <div className="api-status-item">
-                  <span className="status-indicator pending"></span>
+                  <span className="status-indicator pending" aria-label="Status: Pending"></span>
                   <div>
                     <strong>gRPC Gateway</strong>
                     <p>Pending HTTP proxy implementation</p>
                   </div>
                 </div>
                 <div className="api-status-item">
-                  <span className="status-indicator success"></span>
+                  <span className="status-indicator success" aria-label="Status: Available"></span>
                   <div>
                     <strong>CSV Download</strong>
                     <p>Available via /download/ endpoint</p>
                   </div>
                 </div>
                 <div className="api-status-item">
-                  <span className="status-indicator pending"></span>
+                  <span className="status-indicator pending" aria-label="Status: Pending"></span>
                   <div>
                     <strong>Job Status Polling</strong>
                     <p>WebSocket or SSE integration planned</p>

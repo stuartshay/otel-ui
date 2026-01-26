@@ -63,9 +63,9 @@ Created a comprehensive OwnTracks operations interface for managing GPS tracking
 ```text
 src/
 ├── components/
-│   └── OwnTracks.tsx       # Main component (560 lines)
+│   └── OwnTracks.tsx       # Main component (499 lines)
 └── styles/
-    └── OwnTracks.css       # Comprehensive styling (750+ lines)
+    └── OwnTracks.css       # Comprehensive styling (655 lines)
 ```
 
 ## 🔗 Integrations
@@ -230,7 +230,7 @@ export const ownTracksService = {
 ## 🏆 Key Achievements
 
 - ✨ Modern, professional UI design
-- 📐 Comprehensive CSS styling (750+ lines)
+- 📐 Comprehensive CSS styling (655 lines)
 - 🔄 Three-tab interface with distinct functionality
 - 📊 Rich data visualization with metrics
 - 🎨 Consistent design system

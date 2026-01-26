@@ -196,6 +196,12 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
+.btn-primary:focus,
+.btn-primary:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -503,6 +509,14 @@
 }
 
 .btn-download:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+.btn-download:focus,
+.btn-download:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 2px;
   background: #5568d3;
   transform: translateY(-1px);
 }

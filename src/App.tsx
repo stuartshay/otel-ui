@@ -35,14 +35,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <OTelTesting />
-                <Route
-                  path="/owntracks"
-                  element={
-                    <ProtectedRoute>
-                      <OwnTracks />
-                    </ProtectedRoute>
-                  }
-                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owntracks"
+            element={
+              <ProtectedRoute>
+                <OwnTracks />
               </ProtectedRoute>
             }
           />
