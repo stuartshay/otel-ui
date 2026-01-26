@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Callback from './components/Callback';
 import Dashboard from './components/Dashboard';
 import OTelTesting from './components/OTelTesting';
+import OwnTracks from './components/OwnTracks';
 import ProtectedRoute from './components/ProtectedRoute';
 
 /**
@@ -34,6 +35,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <OTelTesting />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owntracks"
+            element={
+              <ProtectedRoute>
+                <OwnTracks />
               </ProtectedRoute>
             }
           />
