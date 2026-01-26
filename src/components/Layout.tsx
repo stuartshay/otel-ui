@@ -27,6 +27,7 @@ export default function Layout({ children }: LayoutProps) {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/testing', label: 'OTel Testing', icon: '🧪' },
+    { path: '/owntracks', label: 'OwnTracks', icon: '📍' },
   ];
 
   return (
