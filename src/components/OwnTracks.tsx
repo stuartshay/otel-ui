@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import Layout from './Layout';
+import Toast from './Toast';
 import { getConfig } from '../config/runtime';
 import '../styles/OwnTracks.css';
+import '../styles/Toast.css';
 
 interface Job {
   job_id: string;
@@ -75,6 +77,10 @@ export default function OwnTracks() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+  } | null>(null);
 
   useEffect(() => {
     // TODO: Fetch real jobs from API
@@ -90,12 +96,16 @@ export default function OwnTracks() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      alert(
-        `✅ Distance calculation job started!\n\nDate: ${selectedDate}\nDevice: ${deviceId || 'All devices'}\n\nNote: API integration pending`
-      );
+      setToast({
+        message: `Distance calculation job started!\nDate: ${selectedDate}\nDevice: ${deviceId || 'All devices'}\n\nNote: API integration pending`,
+        type: 'success',
+      });
     } catch (error) {
       console.error('Error:', error);
-      alert('❌ Failed to start calculation job');
+      setToast({
+        message: 'Failed to start calculation job. Please try again.',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -199,6 +209,7 @@ export default function OwnTracks() {
         {/* Tabs */}
         <div className="tabs" role="tablist">
           <button
+            id="calculate-tab"
             role="tab"
             aria-selected={activeTab === 'calculate'}
             aria-controls="calculate-panel"
@@ -208,6 +219,7 @@ export default function OwnTracks() {
             🎯 Calculate Distance
           </button>
           <button
+            id="jobs-tab"
             role="tab"
             aria-selected={activeTab === 'jobs'}
             aria-controls="jobs-panel"
@@ -217,6 +229,7 @@ export default function OwnTracks() {
             📋 Job History
           </button>
           <button
+            id="analytics-tab"
             role="tab"
             aria-selected={activeTab === 'analytics'}
             aria-controls="analytics-panel"
@@ -315,7 +328,12 @@ export default function OwnTracks() {
 
           {/* Job History Tab */}
           {activeTab === 'jobs' && (
-            <div className="jobs-section">
+            <div
+              id="jobs-panel"
+              role="tabpanel"
+              aria-labelledby="jobs-tab"
+              className="jobs-section"
+            >
               <div className="jobs-header">
                 <h3>📋 Distance Calculation Jobs</h3>
                 <div className="filter-group">
@@ -419,7 +437,12 @@ export default function OwnTracks() {
 
           {/* Analytics Tab */}
           {activeTab === 'analytics' && (
-            <div className="analytics-section">
+            <div
+              id="analytics-panel"
+              role="tabpanel"
+              aria-labelledby="analytics-tab"
+              className="analytics-section"
+            >
               <div className="feature-grid">
                 <div className="feature-card coming-soon">
                   <span className="feature-icon">📈</span>
@@ -515,6 +538,13 @@ export default function OwnTracks() {
           )}
         </div>
       </div>
+
+      {/* Toast Notifications */}
+      {toast && (
+        <div className="toast-container">
+          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        </div>
+      )}
     </Layout>
   );
 }
