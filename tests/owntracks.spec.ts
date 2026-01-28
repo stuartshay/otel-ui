@@ -111,34 +111,11 @@ test.describe('OwnTracks Page', () => {
   });
 
   test('should handle job list loading with mocked API', async ({ page }) => {
-    // Mock the API response for listing jobs
-    await page.route('**/api/distance/jobs*', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          jobs: [
-            {
-              job_id: 'test-job-123',
-              status: 'completed',
-              date: '2026-01-27',
-              device_id: 'test-device',
-              queued_at: '2026-01-27T10:00:00Z',
-              completed_at: '2026-01-27T10:00:15Z',
-            },
-          ],
-          total_count: 1,
-          limit: 50,
-          offset: 0,
-          next_offset: null,
-          trace_id: 'test-trace-id',
-        }),
-      });
-    });
-
-    // Mock individual job status calls
+    // Mock individual job status calls first (more specific pattern)
     await page.route('**/api/distance/jobs/*', route => {
-      if (!route.request().url().includes('?')) {
+      const url = route.request().url();
+      // Only match individual job endpoints (not list endpoint with query params)
+      if (!url.includes('?') && url.match(/\/jobs\/[^/]+$/)) {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -159,6 +136,37 @@ test.describe('OwnTracks Page', () => {
               date: '2026-01-27',
               device_id: 'test-device',
             },
+            trace_id: 'test-trace-id',
+          }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    // Mock the API response for listing jobs (after individual job route)
+    await page.route('**/api/distance/jobs', route => {
+      const url = route.request().url();
+      // Only match the list endpoint (with or without query params)
+      if (!url.match(/\/jobs\/[^/]+$/)) {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            jobs: [
+              {
+                job_id: 'test-job-123',
+                status: 'completed',
+                date: '2026-01-27',
+                device_id: 'test-device',
+                queued_at: '2026-01-27T10:00:00Z',
+                completed_at: '2026-01-27T10:00:15Z',
+              },
+            ],
+            total_count: 1,
+            limit: 50,
+            offset: 0,
+            next_offset: null,
             trace_id: 'test-trace-id',
           }),
         });
@@ -203,19 +211,25 @@ test.describe('OwnTracks Page', () => {
     });
 
     // Mock the job list to return empty initially
-    await page.route('**/api/distance/jobs*', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          jobs: [],
-          total_count: 0,
-          limit: 50,
-          offset: 0,
-          next_offset: null,
-          trace_id: 'test-trace-id',
-        }),
-      });
+    await page.route('**/api/distance/jobs', route => {
+      const url = route.request().url();
+      // Only match the list endpoint (not individual job status)
+      if (!url.match(/\/jobs\/[^/]+$/)) {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            jobs: [],
+            total_count: 0,
+            limit: 50,
+            offset: 0,
+            next_offset: null,
+            trace_id: 'test-trace-id',
+          }),
+        });
+      } else {
+        route.continue();
+      }
     });
 
     await page.goto('/owntracks');
@@ -306,7 +320,7 @@ test.describe('OwnTracks Page', () => {
 
     // Filter out expected/known errors (if any)
     const criticalErrors = consoleErrors.filter(
-      err => !err.includes('Failed to load') || !err.includes('Network')
+      err => !err.includes('Failed to load') && !err.includes('Network')
     );
 
     console.log('OwnTracks console errors:', consoleErrors);

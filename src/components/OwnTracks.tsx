@@ -32,19 +32,28 @@ export default function OwnTracks() {
         offset: 0,
       });
 
-      // Transform JobSummary[] to Job[] by fetching full status for each (in parallel)
-      const fullJobs: Job[] = await Promise.all(
-        response.jobs.map(async jobSummary => {
-          try {
-            const fullJob = await ownTracksService.getJobStatus(jobSummary.job_id);
-            return fullJob;
-          } catch (err) {
-            // If we can't get full job details, use summary data
-            console.error(`Failed to get full job details for ${jobSummary.job_id}:`, err);
-            return jobSummary as Job;
-          }
-        })
-      );
+      // Transform JobSummary[] to Job[] by fetching full status for each
+      // with concurrency limiting to avoid large request bursts (N+1 pattern)
+      const summaries = response.jobs;
+      const concurrencyLimit = 5;
+      const fullJobs: Job[] = [];
+
+      for (let i = 0; i < summaries.length; i += concurrencyLimit) {
+        const chunk = summaries.slice(i, i + concurrencyLimit);
+        const chunkResults = await Promise.all(
+          chunk.map(async jobSummary => {
+            try {
+              const fullJob = await ownTracksService.getJobStatus(jobSummary.job_id);
+              return fullJob;
+            } catch (err) {
+              // If we can't get full job details, use summary data
+              console.error(`Failed to get full job details for ${jobSummary.job_id}:`, err);
+              return jobSummary as Job;
+            }
+          })
+        );
+        fullJobs.push(...chunkResults);
+      }
 
       setJobs(fullJobs);
     } catch (error) {
@@ -68,15 +77,20 @@ export default function OwnTracks() {
 
     if (processingJobs.length === 0) return;
 
-    let timeoutId: number;
+    let timeoutId: number | undefined;
+    let cancelled = false;
 
     // Self-scheduling poll loop to avoid overlapping requests
     const pollJobs = async () => {
+      if (cancelled) return;
+
       try {
         // Fetch all job statuses in parallel
         const updatedJobs = await Promise.all(
           processingJobs.map(job => ownTracksService.getJobStatus(job.job_id))
         );
+
+        if (cancelled) return;
 
         // Update jobs that have changed status
         updatedJobs.forEach((updatedJob, index) => {
@@ -104,15 +118,18 @@ export default function OwnTracks() {
         console.error('Failed to poll jobs:', error);
       }
 
-      // Schedule next poll after completion
-      timeoutId = setTimeout(pollJobs, 3000);
+      // Schedule next poll after completion (only if not cancelled)
+      if (!cancelled) {
+        timeoutId = setTimeout(pollJobs, 3000);
+      }
     };
 
     // Start polling
     pollJobs();
 
     return () => {
-      if (timeoutId) {
+      cancelled = true;
+      if (timeoutId !== undefined) {
         clearTimeout(timeoutId);
       }
     };
@@ -127,10 +144,17 @@ export default function OwnTracks() {
         deviceId || undefined
       );
 
-      // Determine initial job status from API response (default to 'queued' if missing)
-      const jobStatus: Job['status'] = (response.status || 'queued') as Job['status'];
+      // Validate and determine initial job status from API response
+      const validStatuses: Job['status'][] = ['queued', 'processing', 'completed', 'failed'];
+      let jobStatus: Job['status'] = 'queued'; // default
 
-      // Add new job to state with the actual status from the backend
+      if (response.status && validStatuses.includes(response.status as Job['status'])) {
+        jobStatus = response.status as Job['status'];
+      } else if (response.status) {
+        console.warn(`Unexpected job status from API: ${response.status}, defaulting to 'queued'`);
+      }
+
+      // Add new job to state with the validated status from the backend
       const newJob: Job = {
         job_id: response.job_id,
         status: jobStatus,

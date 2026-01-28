@@ -115,7 +115,13 @@ class OwnTracksService {
   async calculateDistance(date: string, deviceId?: string): Promise<CalculateDistanceResponse>;
   async getJobStatus(jobId: string): Promise<Job>;
   async listJobs(filters?: ListJobsFilters): Promise<ListJobsResponse>;
-  async pollJobStatus(jobId: string, onUpdate?: callback, maxAttempts?: number): Promise<Job>;
+  async pollJobStatus(
+    jobId: string,
+    onUpdate?: (job: Job) => void,
+    maxAttempts?: number,
+    intervalMs?: number
+  ): Promise<Job>;
+  async downloadCSV(downloadUrl: string): Promise<void>;
 }
 ```
 
@@ -124,10 +130,11 @@ class OwnTracksService {
 - ✅ Real API calls to `/api/distance/calculate`, `/api/distance/jobs/*`
 - ✅ Automatic job status polling (3-second interval for active jobs)
 - ✅ Toast notifications for job completion/failure
-- ✅ CSV download via API-provided download URLs
+- ✅ CSV download via authenticated axios client (includes JWT bearer tokens)
 - ✅ Error handling with user-friendly messages
 - ✅ Type-safe API client using TypeScript interfaces
-- ✅ Authentication via existing `apiService` (includes JWT bearer tokens)
+- ✅ Concurrency limiting (5 jobs at a time) to prevent N+1 query pattern
+- ✅ Proper polling cleanup to prevent memory leaks
 
 ### Endpoints Used
 
@@ -138,7 +145,7 @@ class OwnTracksService {
 | `/api/distance/jobs`            | GET    | List jobs with filters | ✅ Working |
 | `/api/distance/download/{file}` | GET    | Download CSV           | ✅ Working |
 
-All endpoints require JWT authentication (automatically handled by axios interceptor).
+**Note**: All endpoints require JWT authentication. CSV downloads use the authenticated axios client to include the JWT bearer token in the request headers, ensuring secure file access.
 
 ## 🎨 Design System
 

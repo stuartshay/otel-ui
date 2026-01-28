@@ -40,7 +40,7 @@ export interface CalculateDistanceRequest {
 
 export interface CalculateDistanceResponse {
   job_id: string;
-  status: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
   queued_at: string;
   status_url: string;
   trace_id: string;
@@ -133,14 +133,14 @@ class OwnTracksService {
    * @param jobId - UUID of the job to poll
    * @param onUpdate - Callback invoked on each status check
    * @param maxAttempts - Maximum polling attempts (default: 60)
-   * @param intervalMs - Polling interval in milliseconds (default: 2000)
+   * @param intervalMs - Polling interval in milliseconds (default: 3000)
    * @returns Final job status
    */
   async pollJobStatus(
     jobId: string,
     onUpdate?: (job: GetJobStatusResponse) => void,
     maxAttempts: number = 60,
-    intervalMs: number = 2000
+    intervalMs: number = 3000
   ): Promise<GetJobStatusResponse> {
     let attempts = 0;
 
@@ -172,6 +172,11 @@ class OwnTracksService {
    */
   async downloadCSV(downloadUrl: string): Promise<void> {
     try {
+      // Validate that downloadUrl is a relative path to prevent token leakage
+      if (!downloadUrl.startsWith('/api/distance/download/')) {
+        throw new Error('Invalid download URL: must start with /api/distance/download/');
+      }
+
       // Use authenticated axios client to fetch the file as a blob
       const response = await apiService.getClient().get(downloadUrl, {
         responseType: 'blob',
@@ -182,9 +187,30 @@ class OwnTracksService {
       let filename = 'distance_calculation.csv';
 
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
+        // Prefer RFC 5987 / filename* with UTF-8 and percent-encoding
+        const filenameStarMatch = contentDisposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+        if (filenameStarMatch && filenameStarMatch[1]) {
+          try {
+            filename = decodeURIComponent(filenameStarMatch[1]);
+          } catch {
+            // Fallback to raw value if decoding fails
+            filename = filenameStarMatch[1];
+          }
+        } else {
+          // Fallback to standard filename= parameter (quoted or unquoted)
+          const quotedFilenameMatch = contentDisposition.match(/filename\s*=\s*"([^"]+)"/i);
+          const unquotedFilenameMatch =
+            quotedFilenameMatch == null
+              ? contentDisposition.match(/filename\s*=\s*([^;]+)/i)
+              : null;
+
+          const matchedFilename =
+            (quotedFilenameMatch && quotedFilenameMatch[1]) ||
+            (unquotedFilenameMatch && unquotedFilenameMatch[1]);
+
+          if (matchedFilename) {
+            filename = matchedFilename.trim();
+          }
         }
       } else {
         // Fallback: extract from URL
