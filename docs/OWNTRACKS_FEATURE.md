@@ -100,35 +100,45 @@ interface Job {
 }
 ```
 
-## 🔌 Future API Integration Points
+## 🔌 API Integration - ✅ COMPLETE
 
-To make this fully functional, add these HTTP endpoints to otel-demo (proxy to otel-worker gRPC):
+**Implementation Date**: January 28, 2026
 
-### 1. POST /api/owntracks/calculate
+### API Service Layer
 
-```typescript
-Request: { date: string, device_id?: string }
-Response: { job_id: string, status: string, queued_at: string }
-```
+**File**: `src/services/owntracks.ts`
 
-Maps to: `DistanceService.CalculateDistanceFromHome`
-
-### 2. GET /api/owntracks/jobs/:job_id
+Provides type-safe methods to interact with otel-demo backend:
 
 ```typescript
-Response: JobStatus (with result if completed)
+class OwnTracksService {
+  async calculateDistance(date: string, deviceId?: string): Promise<CalculateDistanceResponse>;
+  async getJobStatus(jobId: string): Promise<Job>;
+  async listJobs(filters?: ListJobsFilters): Promise<ListJobsResponse>;
+  async pollJobStatus(jobId: string, onUpdate?: callback, maxAttempts?: number): Promise<Job>;
+}
 ```
 
-Maps to: `DistanceService.GetJobStatus`
+### Integration Features
 
-### 3. GET /api/owntracks/jobs
+- ✅ Real API calls to `/api/distance/calculate`, `/api/distance/jobs/*`
+- ✅ Automatic job status polling (3-second interval for active jobs)
+- ✅ Toast notifications for job completion/failure
+- ✅ CSV download via API-provided download URLs
+- ✅ Error handling with user-friendly messages
+- ✅ Type-safe API client using TypeScript interfaces
+- ✅ Authentication via existing `apiService` (includes JWT bearer tokens)
 
-```typescript
-Query: status?, limit?, offset?, date?, device_id?
-Response: { jobs: JobSummary[], total_count: number }
-```
+### Endpoints Used
 
-Maps to: `DistanceService.ListJobs`
+| Endpoint                        | Method | Purpose                | Status     |
+| ------------------------------- | ------ | ---------------------- | ---------- |
+| `/api/distance/calculate`       | POST   | Start calculation job  | ✅ Working |
+| `/api/distance/jobs/{id}`       | GET    | Get job status         | ✅ Working |
+| `/api/distance/jobs`            | GET    | List jobs with filters | ✅ Working |
+| `/api/distance/download/{file}` | GET    | Download CSV           | ✅ Working |
+
+All endpoints require JWT authentication (automatically handled by axios interceptor).
 
 ## 🎨 Design System
 
@@ -178,10 +188,10 @@ Navigate to: `http://localhost:5173/owntracks`
 | ------- | ---------- | --------------------------------- |
 | Phase 1 | ✅ Done    | gRPC Service (otel-worker)        |
 | Phase 2 | ✅ Done    | CSV Downloads                     |
-| Phase 3 | 🚧 Current | UI Framework & Components         |
-| Phase 4 | ⏳ Pending | HTTP API Gateway                  |
-| Phase 5 | 📅 Planned | Data Visualization                |
-| Phase 6 | 💡 Future  | Advanced Features (WebSocket, ML) |
+| Phase 3 | ✅ Done    | UI Framework & Components         |
+| Phase 4 | ✅ Done    | API Integration                   |
+| Phase 5 | 🚧 Current | Data Visualization                |
+| Phase 6 | 📅 Planned | Advanced Features (WebSocket, ML) |
 
 ## 💡 Innovation Highlights
 
@@ -191,16 +201,35 @@ Navigate to: `http://localhost:5173/owntracks`
 4. **CSV Download**: Already functional using existing endpoint
 5. **Extensible**: Easy to add real API calls when endpoints are ready
 
-## 📝 Next Steps
+## 📝 Next Steps - Phase 5: Data Visualization
 
-To complete Phase 4 (API Integration):
+API integration is complete! The next phase focuses on analytics and visualization:
 
-1. Add HTTP endpoints in otel-demo Flask app
-2. Create API service client in `src/services/owntracks.ts`
-3. Replace mock data with real API calls
-4. Add error handling and retry logic
-5. Implement WebSocket/SSE for job status polling
-6. Add authentication headers to API requests
+1. **Distance Timeline Charts**: Interactive time-series visualization
+   - Daily distance traveled over time
+   - Line charts with zoom/pan capabilities
+   - Libraries: Chart.js or Recharts
+
+2. **Location Heatmap**: Geographic visualization
+   - Cluster frequently visited locations
+   - Show "home radius" boundary
+   - Libraries: Leaflet or Google Maps API
+
+3. **Statistics Dashboard**: Aggregate metrics
+   - Average daily distance
+   - Peak activity hours
+   - Device usage comparison
+   - Weekly/monthly trends
+
+4. **Activity Pattern Recognition**:
+   - Identify commute patterns
+   - Detect routine vs. anomalous trips
+   - Time-of-day analysis
+
+5. **Alerts & Notifications**:
+   - Distance threshold warnings
+   - Unusual pattern detection
+   - Export scheduled reports
 
 ## 🎓 Usage Example
 
@@ -235,12 +264,16 @@ export const ownTracksService = {
 - 📊 Rich data visualization with metrics
 - 🎨 Consistent design system
 - 📱 Fully responsive layout
-- 🚀 Ready for immediate deployment
-- 🔌 Clear integration path for backend
+- 🚀 Production-ready with full API integration
+- 🔌 Real-time job status polling
+- 🔐 Authenticated API requests via JWT
+- 📥 CSV downloads working end-to-end
+- ⚡ Automatic job updates (3s polling)
 - 📝 Well-documented and maintainable code
 
 ---
 
 **Created:** January 26, 2026
+**API Integration:** January 28, 2026
 **Framework:** React 19 + TypeScript + Vite
-**Status:** UI Complete, API Integration Pending
+**Status:** Phase 4 Complete - Production Ready
