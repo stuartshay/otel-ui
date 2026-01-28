@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Layout from './Layout';
 import Toast from './Toast';
-import { getConfig } from '../config/runtime';
 import { ownTracksService, type Job } from '../services/owntracks';
 import '../styles/OwnTracks.css';
 import '../styles/Toast.css';
@@ -25,7 +24,7 @@ export default function OwnTracks() {
   } | null>(null);
 
   // Fetch jobs from API
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     setLoadingJobs(true);
     try {
       const response = await ownTracksService.listJobs({
@@ -33,18 +32,19 @@ export default function OwnTracks() {
         offset: 0,
       });
 
-      // Transform JobSummary[] to Job[] by fetching full status for each
-      const fullJobs: Job[] = [];
-      for (const jobSummary of response.jobs) {
-        try {
-          const fullJob = await ownTracksService.getJobStatus(jobSummary.job_id);
-          fullJobs.push(fullJob);
-        } catch (err) {
-          // If we can't get full job details, use summary data
-          console.error(`Failed to get full job details for ${jobSummary.job_id}:`, err);
-          fullJobs.push(jobSummary as Job);
-        }
-      }
+      // Transform JobSummary[] to Job[] by fetching full status for each (in parallel)
+      const fullJobs: Job[] = await Promise.all(
+        response.jobs.map(async jobSummary => {
+          try {
+            const fullJob = await ownTracksService.getJobStatus(jobSummary.job_id);
+            return fullJob;
+          } catch (err) {
+            // If we can't get full job details, use summary data
+            console.error(`Failed to get full job details for ${jobSummary.job_id}:`, err);
+            return jobSummary as Job;
+          }
+        })
+      );
 
       setJobs(fullJobs);
     } catch (error) {
@@ -56,11 +56,11 @@ export default function OwnTracks() {
     } finally {
       setLoadingJobs(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [fetchJobs]);
 
   // Poll for job updates for processing jobs
   useEffect(() => {
@@ -68,14 +68,23 @@ export default function OwnTracks() {
 
     if (processingJobs.length === 0) return;
 
-    const pollInterval = setInterval(async () => {
-      for (const job of processingJobs) {
-        try {
-          const updatedJob = await ownTracksService.getJobStatus(job.job_id);
+    let timeoutId: number;
 
-          // Update job in state if status changed
-          if (updatedJob.status !== job.status) {
-            setJobs(prevJobs => prevJobs.map(j => (j.job_id === job.job_id ? updatedJob : j)));
+    // Self-scheduling poll loop to avoid overlapping requests
+    const pollJobs = async () => {
+      try {
+        // Fetch all job statuses in parallel
+        const updatedJobs = await Promise.all(
+          processingJobs.map(job => ownTracksService.getJobStatus(job.job_id))
+        );
+
+        // Update jobs that have changed status
+        updatedJobs.forEach((updatedJob, index) => {
+          const originalJob = processingJobs[index];
+          if (updatedJob.status !== originalJob.status) {
+            setJobs(prevJobs =>
+              prevJobs.map(j => (j.job_id === updatedJob.job_id ? updatedJob : j))
+            );
 
             // Show toast on completion
             if (updatedJob.status === 'completed') {
@@ -90,13 +99,23 @@ export default function OwnTracks() {
               });
             }
           }
-        } catch (error) {
-          console.error(`Failed to poll job ${job.job_id}:`, error);
-        }
+        });
+      } catch (error) {
+        console.error('Failed to poll jobs:', error);
       }
-    }, 3000); // Poll every 3 seconds
 
-    return () => clearInterval(pollInterval);
+      // Schedule next poll after completion
+      timeoutId = setTimeout(pollJobs, 3000);
+    };
+
+    // Start polling
+    pollJobs();
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [jobs]);
 
   const handleCalculate = async () => {
@@ -108,10 +127,13 @@ export default function OwnTracks() {
         deviceId || undefined
       );
 
-      // Add new job to state (in queued status)
+      // Determine initial job status from API response (default to 'queued' if missing)
+      const jobStatus: Job['status'] = (response.status || 'queued') as Job['status'];
+
+      // Add new job to state with the actual status from the backend
       const newJob: Job = {
         job_id: response.job_id,
-        status: 'queued' as const,
+        status: jobStatus,
         date: selectedDate,
         device_id: deviceId,
         queued_at: response.queued_at,
@@ -138,11 +160,17 @@ export default function OwnTracks() {
     }
   };
 
-  const handleDownloadCSV = (downloadUrl: string) => {
-    // downloadUrl is already the full path from API (e.g., /api/distance/download/filename.csv)
-    const apiBaseUrl = getConfig('API_BASE_URL');
-    const fullUrl = `${apiBaseUrl}${downloadUrl}`;
-    window.open(fullUrl, '_blank');
+  const handleDownloadCSV = async (downloadUrl: string) => {
+    // Use authenticated API service to download CSV with JWT token
+    try {
+      await ownTracksService.downloadCSV(downloadUrl);
+    } catch (error) {
+      console.error('Failed to download CSV:', error);
+      setToast({
+        message: 'Failed to download CSV file. Please try again.',
+        type: 'error',
+      });
+    }
   };
 
   const filteredJobs =

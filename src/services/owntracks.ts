@@ -163,6 +163,52 @@ class OwnTracksService {
 
     throw new Error(`Job ${jobId} did not complete within ${maxAttempts} attempts`);
   }
+
+  /**
+   * Download CSV file with authentication
+   *
+   * @param downloadUrl - Download path from API (e.g., /api/distance/download/filename.csv)
+   * @returns Promise that resolves when download starts
+   */
+  async downloadCSV(downloadUrl: string): Promise<void> {
+    try {
+      // Use authenticated axios client to fetch the file as a blob
+      const response = await apiService.getClient().get(downloadUrl, {
+        responseType: 'blob',
+      });
+
+      // Extract filename from Content-Disposition header or URL
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'distance_calculation.csv';
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      } else {
+        // Fallback: extract from URL
+        const urlParts = downloadUrl.split('/');
+        filename = urlParts[urlParts.length - 1];
+      }
+
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download CSV:', error);
+      throw new Error('Failed to download CSV file');
+    }
+  }
 }
 
 // Export singleton instance
