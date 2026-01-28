@@ -8,38 +8,81 @@ import { test, expect } from '@playwright/test';
 test.describe('OwnTracks Page', () => {
   // Setup authentication mock before each test
   // This is needed because /owntracks is a protected route
+  // The app uses oidc-client-ts which stores user data in localStorage
+  // with key pattern: oidc.user:<issuer>:<clientId>
   test.beforeEach(async ({ page }) => {
-    // Mock the authentication API endpoints
-    await page.route('**/api/auth/**', route => {
+    // Mock Cognito userinfo endpoint
+    await page.route('**/oauth2/userInfo', route => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          authenticated: true,
-          user: { name: 'Test User', email: 'test@example.com' },
-        }),
-      });
-    });
-
-    // Mock the user info endpoint if it exists
-    await page.route('**/api/user/**', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          name: 'Test User',
+          sub: 'test-user-123',
           email: 'test@example.com',
+          name: 'Test User',
+          email_verified: true,
         }),
       });
     });
 
-    // Set localStorage to simulate authenticated state
+    // Mock distance API endpoints that don't have specific mocks
+    await page.route('**/api/distance/jobs', route => {
+      const url = route.request().url();
+      // Only match the list endpoint (not individual job status)
+      if (!url.match(/\/jobs\/[^/]+$/)) {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            jobs: [],
+            total_count: 0,
+            limit: 50,
+            offset: 0,
+            next_offset: null,
+            trace_id: 'test-trace-id',
+          }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    // Set localStorage to simulate authenticated OIDC state
+    // oidc-client-ts uses key pattern: oidc.user:<issuer>:<clientId>
+    // We use a wildcard-friendly approach by setting the expected structure
     await page.addInitScript(() => {
-      localStorage.setItem('auth_token', 'mock-jwt-token-for-testing');
-      localStorage.setItem(
-        'user',
-        JSON.stringify({ name: 'Test User', email: 'test@example.com' })
-      );
+      // Mock OIDC user data structure matching oidc-client-ts User class
+      const mockOidcUser = {
+        id_token: 'mock-id-token',
+        access_token: 'mock-access-token-for-testing',
+        token_type: 'Bearer',
+        scope: 'openid profile email',
+        profile: {
+          sub: 'test-user-123',
+          email: 'test@example.com',
+          name: 'Test User',
+          email_verified: true,
+        },
+        expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+        state: null,
+      };
+
+      // The issuer and clientId come from env vars, but for testing we use known values
+      // These should match VITE_COGNITO_ISSUER and VITE_COGNITO_CLIENT_ID from .env
+      const issuer = 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_test';
+      const clientId = 'test-client-id';
+      const storageKey = `oidc.user:${issuer}:${clientId}`;
+
+      localStorage.setItem(storageKey, JSON.stringify(mockOidcUser));
+
+      // Also set a fallback key pattern that oidc-client-ts might look for
+      // This helps when the actual issuer/clientId differ from test values
+      const keys = Object.keys(localStorage);
+      const hasOidcKey = keys.some(k => k.startsWith('oidc.user:'));
+      if (!hasOidcKey) {
+        // Set with empty issuer/clientId as fallback
+        localStorage.setItem('oidc.user::', JSON.stringify(mockOidcUser));
+      }
     });
   });
 
@@ -308,7 +351,7 @@ test.describe('OwnTracks Page', () => {
     expect(options).toContain('Failed');
   });
 
-  test('should be responsive and mobile-friendly', async ({ page, isMobile }) => {
+  test('should be responsive and mobile-friendly', async ({ page }) => {
     await page.goto('/owntracks');
     await page.waitForLoadState('domcontentloaded');
 
@@ -320,12 +363,35 @@ test.describe('OwnTracks Page', () => {
     const content = page.locator('.tab-content');
     await expect(content).toBeVisible();
 
-    // Take screenshot for visual verification
-    if (isMobile) {
-      await page.screenshot({ path: 'tests/screenshots/owntracks-mobile.png', fullPage: true });
-    } else {
-      await page.screenshot({ path: 'tests/screenshots/owntracks-desktop.png', fullPage: true });
-    }
+    // Check that stats row is visible (responsive element)
+    const statsRow = page.locator('.stats-row');
+    await expect(statsRow).toBeVisible();
+
+    // Check form elements are accessible
+    const dateInput = page.locator('input[type="date"]');
+    await expect(dateInput).toBeVisible();
+
+    // Take screenshot for visual verification (desktop viewport by default)
+    await page.screenshot({ path: 'tests/screenshots/owntracks-desktop.png', fullPage: true });
+  });
+
+  test('should render correctly on mobile viewport', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    await page.goto('/owntracks');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Check that tabs are visible on mobile
+    const tabs = page.locator('.tabs');
+    await expect(tabs).toBeVisible();
+
+    // Check that content is visible
+    const content = page.locator('.tab-content');
+    await expect(content).toBeVisible();
+
+    // Take screenshot for mobile visual verification
+    await page.screenshot({ path: 'tests/screenshots/owntracks-mobile.png', fullPage: true });
   });
 
   test('should not have console errors on load', async ({ page }) => {
