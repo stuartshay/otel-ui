@@ -85,16 +85,24 @@ export default function OwnTracks() {
       if (cancelled) return;
 
       try {
-        // Fetch all job statuses in parallel
-        const updatedJobs = await Promise.all(
+        // Fetch all job statuses in parallel using Promise.allSettled
+        // so one failing request doesn't block updates for other jobs
+        const results = await Promise.allSettled(
           processingJobs.map(job => ownTracksService.getJobStatus(job.job_id))
         );
 
         if (cancelled) return;
 
-        // Update jobs that have changed status
-        updatedJobs.forEach((updatedJob, index) => {
+        // Process only successful responses
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Failed to poll job ${processingJobs[index].job_id}:`, result.reason);
+            return;
+          }
+
+          const updatedJob = result.value;
           const originalJob = processingJobs[index];
+
           if (updatedJob.status !== originalJob.status) {
             setJobs(prevJobs =>
               prevJobs.map(j => (j.job_id === updatedJob.job_id ? updatedJob : j))

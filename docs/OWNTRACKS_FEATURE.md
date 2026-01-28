@@ -133,7 +133,7 @@ class OwnTracksService {
 - ✅ CSV download via authenticated axios client (includes JWT bearer tokens)
 - ✅ Error handling with user-friendly messages
 - ✅ Type-safe API client using TypeScript interfaces
-- ✅ Concurrency limiting (5 jobs at a time) to prevent N+1 query pattern
+- ✅ Concurrency limiting (5 jobs at a time) to reduce request bursts from N+1 polling pattern
 - ✅ Proper polling cleanup to prevent memory leaks
 
 ### Endpoints Used

@@ -6,6 +6,43 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('OwnTracks Page', () => {
+  // Setup authentication mock before each test
+  // This is needed because /owntracks is a protected route
+  test.beforeEach(async ({ page }) => {
+    // Mock the authentication API endpoints
+    await page.route('**/api/auth/**', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          authenticated: true,
+          user: { name: 'Test User', email: 'test@example.com' },
+        }),
+      });
+    });
+
+    // Mock the user info endpoint if it exists
+    await page.route('**/api/user/**', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          name: 'Test User',
+          email: 'test@example.com',
+        }),
+      });
+    });
+
+    // Set localStorage to simulate authenticated state
+    await page.addInitScript(() => {
+      localStorage.setItem('auth_token', 'mock-jwt-token-for-testing');
+      localStorage.setItem(
+        'user',
+        JSON.stringify({ name: 'Test User', email: 'test@example.com' })
+      );
+    });
+  });
+
   test('should load owntracks page with correct structure', async ({ page }) => {
     // Navigate to owntracks page
     await page.goto('/owntracks');
@@ -182,12 +219,9 @@ test.describe('OwnTracks Page', () => {
     const jobsTab = page.locator('button[role="tab"]', { hasText: 'Job History' });
     await jobsTab.click();
 
-    // Wait for jobs to load
-    await page.waitForTimeout(500);
-
-    // Check for job card
+    // Wait for jobs to load by checking for the job card (deterministic wait)
     const jobCard = page.locator('.job-card');
-    await expect(jobCard).toBeVisible();
+    await expect(jobCard).toBeVisible({ timeout: 5000 });
 
     // Check for job details
     await expect(page.locator('text=test-job-123')).toBeVisible();
@@ -246,14 +280,11 @@ test.describe('OwnTracks Page', () => {
     const calculateButton = page.locator('button', { hasText: 'Calculate Distance' });
     await calculateButton.click();
 
-    // Wait for the request to complete
-    await page.waitForTimeout(500);
-
-    // Should switch to Jobs tab and show success toast
+    // Wait for the Jobs tab to become selected (deterministic wait instead of timeout)
     const jobsTab = page.locator('button[role="tab"][aria-selected="true"]', {
       hasText: 'Job History',
     });
-    await expect(jobsTab).toBeVisible();
+    await expect(jobsTab).toBeVisible({ timeout: 5000 });
   });
 
   test('should show status filter in jobs tab', async ({ page }) => {
@@ -318,12 +349,17 @@ test.describe('OwnTracks Page', () => {
     await page.goto('/owntracks');
     await page.waitForLoadState('networkidle');
 
-    // Filter out expected/known errors (if any)
+    // Filter out expected/known errors (e.g., network errors when mocking)
     const criticalErrors = consoleErrors.filter(
       err => !err.includes('Failed to load') && !err.includes('Network')
     );
 
-    console.log('OwnTracks console errors:', consoleErrors);
-    expect(criticalErrors.length).toBeLessThanOrEqual(1); // Allow minor errors
+    // Log errors only when unexpected/critical errors are present (helps with debugging)
+    if (criticalErrors.length > 0) {
+      console.error('Unexpected console errors:', criticalErrors);
+    }
+
+    // Assert that there are no unexpected/critical console errors
+    expect(criticalErrors).toHaveLength(0);
   });
 });

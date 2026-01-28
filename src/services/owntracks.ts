@@ -142,9 +142,7 @@ class OwnTracksService {
     maxAttempts: number = 60,
     intervalMs: number = 3000
   ): Promise<GetJobStatusResponse> {
-    let attempts = 0;
-
-    while (attempts < maxAttempts) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const job = await this.getJobStatus(jobId);
 
       if (onUpdate) {
@@ -156,9 +154,10 @@ class OwnTracksService {
         return job;
       }
 
-      // Wait before next poll
-      await new Promise(resolve => setTimeout(resolve, intervalMs));
-      attempts++;
+      // Only sleep if more attempts remain (avoid unnecessary delay before throwing)
+      if (attempt < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      }
     }
 
     throw new Error(`Job ${jobId} did not complete within ${maxAttempts} attempts`);
