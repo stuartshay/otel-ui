@@ -31,6 +31,12 @@ if [ -f "package.json" ]; then
   echo "✓ Updated package.json"
 fi
 
+# Update README.md deployment status
+if [ -f "README.md" ]; then
+  sed -i "s/Version [0-9]\+\.[0-9]\+\.[0-9]\+ deployed/Version $VERSION deployed/" README.md
+  echo "✓ Updated README.md deployment status"
+fi
+
 # Update .env if it exists
 if [ -f ".env" ]; then
   if grep -q "^VITE_APP_VERSION=" .env; then
@@ -45,5 +51,5 @@ echo ""
 echo "Next steps:"
 echo "1. Update k8s manifests: cd ../k8s-gitops/apps/base/otel-ui && ./update-version.sh $VERSION"
 echo "2. Build Docker image: docker build -t stuartshay/otel-ui:$VERSION ."
-echo "3. Commit changes: git add VERSION package.json && git commit -m 'chore: Bump version to $VERSION'"
+echo "3. Commit changes: git add VERSION package.json README.md && git commit -m 'chore: Bump version to $VERSION'"
 echo "4. Tag release: git tag v$VERSION && git push origin v$VERSION"
