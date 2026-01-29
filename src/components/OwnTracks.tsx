@@ -1,69 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Layout from './Layout';
 import Toast from './Toast';
-import { getConfig } from '../config/runtime';
+import { ownTracksService, type Job } from '../services/owntracks';
 import '../styles/OwnTracks.css';
 import '../styles/Toast.css';
-
-interface Job {
-  job_id: string;
-  status: 'queued' | 'processing' | 'completed' | 'failed';
-  date: string;
-  device_id: string;
-  queued_at: string;
-  completed_at?: string;
-  result?: {
-    total_distance_km: number;
-    total_locations: number;
-    max_distance_km: number;
-    min_distance_km: number;
-    csv_path: string;
-    processing_time_ms: number;
-  };
-}
-
-// Mock data for demonstration - will be replaced with real API calls
-const mockJobs: Job[] = [
-  {
-    job_id: 'job_2026-01-25_abc123',
-    status: 'completed',
-    date: '2026-01-25',
-    device_id: 'iphone_stuart',
-    queued_at: '2026-01-25T10:30:00Z',
-    completed_at: '2026-01-25T10:30:15Z',
-    result: {
-      total_distance_km: 42.5,
-      total_locations: 1440,
-      max_distance_km: 15.2,
-      min_distance_km: 0.1,
-      csv_path: 'distance_20260125_iphone_stuart.csv',
-      processing_time_ms: 1250,
-    },
-  },
-  {
-    job_id: 'job_2026-01-24_def456',
-    status: 'completed',
-    date: '2026-01-24',
-    device_id: '',
-    queued_at: '2026-01-24T08:15:00Z',
-    completed_at: '2026-01-24T08:15:22Z',
-    result: {
-      total_distance_km: 58.3,
-      total_locations: 2880,
-      max_distance_km: 18.7,
-      min_distance_km: 0.0,
-      csv_path: 'distance_20260124.csv',
-      processing_time_ms: 2150,
-    },
-  },
-  {
-    job_id: 'job_2026-01-26_ghi789',
-    status: 'processing',
-    date: '2026-01-26',
-    device_id: '',
-    queued_at: '2026-01-26T12:00:00Z',
-  },
-];
 
 /**
  * OwnTracks Operations Component
@@ -76,34 +16,175 @@ export default function OwnTracks() {
   const [activeTab, setActiveTab] = useState<'calculate' | 'jobs' | 'analytics'>('calculate');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingJobs, setLoadingJobs] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
   } | null>(null);
 
-  useEffect(() => {
-    // TODO: Fetch real jobs from API
-    setJobs(mockJobs);
+  // Fetch jobs from API
+  const fetchJobs = useCallback(async () => {
+    setLoadingJobs(true);
+    try {
+      const response = await ownTracksService.listJobs({
+        limit: 50,
+        offset: 0,
+      });
+
+      // Transform JobSummary[] to Job[] by fetching full status for each
+      // with concurrency limiting to avoid large request bursts (N+1 pattern)
+      const summaries = response.jobs;
+      const concurrencyLimit = 5;
+      const fullJobs: Job[] = [];
+
+      for (let i = 0; i < summaries.length; i += concurrencyLimit) {
+        const chunk = summaries.slice(i, i + concurrencyLimit);
+        const chunkResults = await Promise.all(
+          chunk.map(async jobSummary => {
+            try {
+              const fullJob = await ownTracksService.getJobStatus(jobSummary.job_id);
+              return fullJob;
+            } catch (err) {
+              // If we can't get full job details, use summary data
+              console.error(`Failed to get full job details for ${jobSummary.job_id}:`, err);
+              return jobSummary as Job;
+            }
+          })
+        );
+        fullJobs.push(...chunkResults);
+      }
+
+      setJobs(fullJobs);
+    } catch (error) {
+      console.error('Failed to fetch jobs:', error);
+      setToast({
+        message: 'Failed to load job history. Please refresh the page.',
+        type: 'error',
+      });
+    } finally {
+      setLoadingJobs(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  // Poll for job updates for processing jobs
+  useEffect(() => {
+    const processingJobs = jobs.filter(j => j.status === 'processing' || j.status === 'queued');
+
+    if (processingJobs.length === 0) return;
+
+    let timeoutId: number | undefined;
+    let cancelled = false;
+
+    // Self-scheduling poll loop to avoid overlapping requests
+    const pollJobs = async () => {
+      if (cancelled) return;
+
+      try {
+        // Fetch all job statuses in parallel using Promise.allSettled
+        // so one failing request doesn't block updates for other jobs
+        const results = await Promise.allSettled(
+          processingJobs.map(job => ownTracksService.getJobStatus(job.job_id))
+        );
+
+        if (cancelled) return;
+
+        // Process only successful responses
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Failed to poll job ${processingJobs[index].job_id}:`, result.reason);
+            return;
+          }
+
+          const updatedJob = result.value;
+          const originalJob = processingJobs[index];
+
+          if (updatedJob.status !== originalJob.status) {
+            setJobs(prevJobs =>
+              prevJobs.map(j => (j.job_id === updatedJob.job_id ? updatedJob : j))
+            );
+
+            // Show toast on completion
+            if (updatedJob.status === 'completed') {
+              setToast({
+                message: `Job ${updatedJob.job_id} completed successfully!`,
+                type: 'success',
+              });
+            } else if (updatedJob.status === 'failed') {
+              setToast({
+                message: `Job ${updatedJob.job_id} failed: ${updatedJob.error_message || 'Unknown error'}`,
+                type: 'error',
+              });
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Failed to poll jobs:', error);
+      }
+
+      // Schedule next poll after completion (only if not cancelled)
+      if (!cancelled) {
+        timeoutId = setTimeout(pollJobs, 3000);
+      }
+    };
+
+    // Start polling
+    pollJobs();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [jobs]);
 
   const handleCalculate = async () => {
     setLoading(true);
     try {
-      // TODO: Call API endpoint to trigger calculation
-      console.log('Calculate distance for:', { date: selectedDate, deviceId });
+      // Call API to start distance calculation
+      const response = await ownTracksService.calculateDistance(
+        selectedDate,
+        deviceId || undefined
+      );
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Validate and determine initial job status from API response
+      const validStatuses: Job['status'][] = ['queued', 'processing', 'completed', 'failed'];
+      let jobStatus: Job['status'] = 'queued'; // default
+
+      if (response.status && validStatuses.includes(response.status as Job['status'])) {
+        jobStatus = response.status as Job['status'];
+      } else if (response.status) {
+        console.warn(`Unexpected job status from API: ${response.status}, defaulting to 'queued'`);
+      }
+
+      // Add new job to state with the validated status from the backend
+      const newJob: Job = {
+        job_id: response.job_id,
+        status: jobStatus,
+        date: selectedDate,
+        device_id: deviceId,
+        queued_at: response.queued_at,
+      };
+
+      setJobs(prevJobs => [newJob, ...prevJobs]);
 
       setToast({
-        message: `Distance calculation job started!\nDate: ${selectedDate}\nDevice: ${deviceId || 'All devices'}\n\nNote: API integration pending`,
+        message: `Distance calculation job started!\nJob ID: ${response.job_id}\nDate: ${selectedDate}\nDevice: ${deviceId || 'All devices'}`,
         type: 'success',
       });
+
+      // Switch to Jobs tab to see the new job
+      setActiveTab('jobs');
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error starting calculation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setToast({
-        message: 'Failed to start calculation job. Please try again.',
+        message: `Failed to start calculation job: ${errorMessage}`,
         type: 'error',
       });
     } finally {
@@ -111,12 +192,17 @@ export default function OwnTracks() {
     }
   };
 
-  const handleDownloadCSV = (csvPath: string) => {
-    // Use the existing CSV download proxy endpoint
-    const filename = csvPath.split('/').pop() || csvPath;
-    const apiBaseUrl = getConfig('API_BASE_URL');
-    const downloadUrl = `${apiBaseUrl}/download/${filename}`;
-    window.open(downloadUrl, '_blank');
+  const handleDownloadCSV = async (downloadUrl: string) => {
+    // Use authenticated API service to download CSV with JWT token
+    try {
+      await ownTracksService.downloadCSV(downloadUrl);
+    } catch (error) {
+      console.error('Failed to download CSV:', error);
+      setToast({
+        message: 'Failed to download CSV file. Please try again.',
+        type: 'error',
+      });
+    }
   };
 
   const filteredJobs =
@@ -302,24 +388,24 @@ export default function OwnTracks() {
               <div className="api-status-card">
                 <h3>🔌 API Status</h3>
                 <div className="api-status-item">
-                  <span className="status-indicator pending" aria-label="Status: Pending"></span>
+                  <span className="status-indicator success" aria-label="Status: Available"></span>
                   <div>
-                    <strong>gRPC Gateway</strong>
-                    <p>Pending HTTP proxy implementation</p>
+                    <strong>REST API Gateway</strong>
+                    <p>Connected to otel-demo backend</p>
                   </div>
                 </div>
                 <div className="api-status-item">
                   <span className="status-indicator success" aria-label="Status: Available"></span>
                   <div>
                     <strong>CSV Download</strong>
-                    <p>Available via /download/ endpoint</p>
+                    <p>Available via /api/distance/download/</p>
                   </div>
                 </div>
                 <div className="api-status-item">
-                  <span className="status-indicator pending" aria-label="Status: Pending"></span>
+                  <span className="status-indicator success" aria-label="Status: Available"></span>
                   <div>
                     <strong>Job Status Polling</strong>
-                    <p>WebSocket or SSE integration planned</p>
+                    <p>Auto-refresh active (3s interval)</p>
                   </div>
                 </div>
               </div>
@@ -349,7 +435,12 @@ export default function OwnTracks() {
               </div>
 
               <div className="jobs-list">
-                {filteredJobs.length === 0 ? (
+                {loadingJobs ? (
+                  <div className="empty-state">
+                    <span className="spinner"></span>
+                    <h4>Loading jobs...</h4>
+                  </div>
+                ) : filteredJobs.length === 0 ? (
                   <div className="empty-state">
                     <span className="empty-icon">📭</span>
                     <h4>No jobs found</h4>
@@ -422,7 +513,7 @@ export default function OwnTracks() {
                         {job.status === 'completed' && job.result && (
                           <button
                             className="btn-download"
-                            onClick={() => handleDownloadCSV(job.result!.csv_path)}
+                            onClick={() => handleDownloadCSV(job.result!.csv_download_url)}
                           >
                             📥 Download CSV
                           </button>
@@ -504,25 +595,25 @@ export default function OwnTracks() {
                       <p>HTTP proxy endpoint for downloading calculation results</p>
                     </div>
                   </div>
-                  <div className="roadmap-item current">
-                    <span className="roadmap-icon">🚧</span>
+                  <div className="roadmap-item done">
+                    <span className="roadmap-icon">✅</span>
                     <div>
                       <strong>Phase 3: UI Framework</strong>
-                      <p>React component structure and design system (current)</p>
+                      <p>React component structure and design system</p>
                     </div>
                   </div>
-                  <div className="roadmap-item">
-                    <span className="roadmap-icon">⏳</span>
+                  <div className="roadmap-item done">
+                    <span className="roadmap-icon">✅</span>
                     <div>
                       <strong>Phase 4: API Integration</strong>
                       <p>HTTP endpoints for job management and status polling</p>
                     </div>
                   </div>
-                  <div className="roadmap-item">
-                    <span className="roadmap-icon">📊</span>
+                  <div className="roadmap-item current">
+                    <span className="roadmap-icon">🚧</span>
                     <div>
                       <strong>Phase 5: Data Visualization</strong>
-                      <p>Charts, maps, and interactive analytics dashboard</p>
+                      <p>Charts, maps, and interactive analytics dashboard (next)</p>
                     </div>
                   </div>
                   <div className="roadmap-item">
