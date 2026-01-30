@@ -224,18 +224,18 @@ test.describe('API Service - Direct API Tests', () => {
   });
 });
 
-test.describe('API Service - Retry Logic Tests', () => {
-  // Note: These tests verify retry behavior by testing endpoints
-  // that are expected to succeed. Full retry testing would require
-  // a mock server or test endpoint that fails intermittently.
+test.describe('API Service - Request Handling Tests', () => {
+  // Note: These tests verify basic request handling and concurrent request behavior.
+  // Full retry testing would require a mock server that returns transient errors.
+  // The retry logic in api.ts handles status codes: 408, 429, 500, 502, 503, 504
 
-  test('should successfully complete request without retry on 200', async ({ request }) => {
+  test('should successfully complete request on 200', async ({ request }) => {
     const response = await request.get(`${API_BASE_URL}/health`);
     expect(response.ok()).toBeTruthy();
     expect(response.status()).toBe(200);
   });
 
-  test('should handle timeout gracefully', async ({ request }) => {
+  test('should handle long-running requests within timeout', async ({ request }) => {
     // The /slow endpoint has a delay but should complete within timeout
     const response = await request.get(`${API_BASE_URL}/slow`, {
       timeout: 60000, // Allow plenty of time

@@ -146,7 +146,7 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 
 ## Pending Tasks 📋
 
-### 13. React Components
+### 14. React Components
 
 #### Core Components
 

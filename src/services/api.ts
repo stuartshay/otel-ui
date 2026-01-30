@@ -129,7 +129,7 @@ function calculateRetryDelay(attempt: number): number {
  * Check if request should be retried based on error
  */
 function shouldRetry(error: AxiosError): boolean {
-  // Don't retry if no response (network error) - these may be retried
+  // For network errors (no response), only retry on connection timeout or abort errors
   if (!error.response) {
     return error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
   }

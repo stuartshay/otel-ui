@@ -158,11 +158,11 @@ test.describe('Auth Service - Error Handling', () => {
     // Navigate to callback without valid state
     await page.goto(`${BASE_URL}/callback?error=access_denied&error_description=User%20cancelled`);
 
-    // Should redirect to login or show error
-    await page.waitForTimeout(2000);
+    // Should redirect to login or show error - wait for navigation
+    await page.waitForURL(/\/(login)?$/, { timeout: 5000 }).catch(() => {});
 
     const url = page.url();
-    // Should not stay on callback page
+    // Should not stay on callback page with error
     expect(url).not.toContain('callback?error');
   });
 
@@ -170,8 +170,8 @@ test.describe('Auth Service - Error Handling', () => {
     // Navigate to callback without any params
     await page.goto(`${BASE_URL}/callback`);
 
-    // Should redirect to login
-    await page.waitForTimeout(2000);
+    // Should redirect to login - wait for navigation
+    await page.waitForURL(/\/(login)?$/, { timeout: 5000 }).catch(() => {});
 
     const url = page.url();
     expect(url).toMatch(/(login|\/)/);
