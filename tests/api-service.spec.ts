@@ -2,10 +2,13 @@
  * API Service Unit Tests
  *
  * Tests for the API client service including:
- * - Database endpoint methods
- * - Retry logic
+ * - Health and demo endpoints
+ * - Trace ID consistency
+ * - CORS header validation
  * - Error handling
- * - Type safety
+ * - Request handling
+ *
+ * NOTE: Database endpoint tests are in tests/database-endpoints.spec.ts
  */
 
 import { test, expect } from '@playwright/test';
@@ -44,81 +47,8 @@ test.describe('API Service - Direct API Tests', () => {
     });
   });
 
-  test.describe('Database Endpoints', () => {
-    test('GET /db/status should return database connection info', async ({ request }) => {
-      const response = await request.get(`${API_BASE_URL}/db/status`);
-      expect(response.ok()).toBeTruthy();
-      expect(response.status()).toBe(200);
-
-      const data = await response.json();
-      expect(data).toHaveProperty('status', 'connected');
-      expect(data).toHaveProperty('database');
-      expect(data).toHaveProperty('host');
-      expect(data).toHaveProperty('port');
-      expect(data).toHaveProperty('server_version');
-      expect(data).toHaveProperty('trace_id');
-
-      // Verify trace ID format (32-char hex)
-      expect(data.trace_id).toMatch(/^[0-9a-f]{32}$/);
-    });
-
-    test('GET /db/locations should return paginated locations', async ({ request }) => {
-      const response = await request.get(`${API_BASE_URL}/db/locations?limit=5`);
-      expect(response.ok()).toBeTruthy();
-      expect(response.status()).toBe(200);
-
-      const data = await response.json();
-      expect(data).toHaveProperty('count');
-      expect(data).toHaveProperty('limit', 5);
-      expect(data).toHaveProperty('offset', 0);
-      expect(data).toHaveProperty('sort');
-      expect(data).toHaveProperty('order');
-      expect(data).toHaveProperty('locations');
-      expect(data).toHaveProperty('trace_id');
-
-      expect(Array.isArray(data.locations)).toBeTruthy();
-    });
-
-    test('GET /db/locations should support query parameters', async ({ request }) => {
-      const response = await request.get(
-        `${API_BASE_URL}/db/locations?limit=2&offset=0&sort=timestamp&order=desc`
-      );
-      expect(response.ok()).toBeTruthy();
-      expect(response.status()).toBe(200);
-
-      const data = await response.json();
-      expect(data).toHaveProperty('limit', 2);
-      expect(data).toHaveProperty('offset', 0);
-      expect(data).toHaveProperty('sort', 'timestamp');
-      expect(data).toHaveProperty('order', 'desc');
-    });
-
-    test('GET /db/locations should return location record structure', async ({ request }) => {
-      const response = await request.get(`${API_BASE_URL}/db/locations?limit=1`);
-      expect(response.ok()).toBeTruthy();
-
-      const data = await response.json();
-      if (data.locations.length > 0) {
-        const location = data.locations[0];
-        // Verify all expected fields are present
-        expect(location).toHaveProperty('id');
-        expect(location).toHaveProperty('device_id');
-        expect(location).toHaveProperty('tid');
-        expect(location).toHaveProperty('latitude');
-        expect(location).toHaveProperty('longitude');
-        expect(location).toHaveProperty('accuracy');
-        expect(location).toHaveProperty('altitude');
-        expect(location).toHaveProperty('velocity');
-        expect(location).toHaveProperty('battery');
-        expect(location).toHaveProperty('battery_status');
-        expect(location).toHaveProperty('connection_type');
-        expect(location).toHaveProperty('trigger');
-        expect(location).toHaveProperty('timestamp');
-        expect(location).toHaveProperty('created_at');
-        expect(location).toHaveProperty('raw_payload');
-      }
-    });
-  });
+  // NOTE: Database endpoint tests are in tests/database-endpoints.spec.ts
+  // to avoid duplication. See that file for comprehensive /db/status and /db/locations tests.
 
   test.describe('Demo Endpoints', () => {
     test('GET /chain should return chain demo response', async ({ request }) => {
