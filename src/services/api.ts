@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import type { AxiosInstance, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import type { paths } from '@stuartshay/otel-types';
 import { authService } from './auth';
 import { getConfig } from '../config/runtime';
@@ -11,6 +11,59 @@ export type InfoResponse = paths['/info']['get']['responses']['200']['content'][
 export type ChainResponse = paths['/chain']['get']['responses']['200']['content']['*/*'];
 export type ErrorResponse = paths['/error']['get']['responses']['500']['content']['*/*'];
 export type SlowResponse = paths['/slow']['get']['responses']['200']['content']['*/*'];
+
+// Database endpoint response types
+export interface DatabaseStatusResponse {
+  status: 'connected' | 'disconnected' | 'error';
+  database: string;
+  host: string;
+  port: number;
+  server_version: string;
+  trace_id: string;
+}
+
+export interface LocationRecord {
+  id: number;
+  device_id: string;
+  tid: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  altitude: number;
+  velocity: number;
+  battery: number;
+  battery_status: number;
+  connection_type: string;
+  trigger: string;
+  timestamp: string;
+  created_at: string;
+  raw_payload: Record<string, unknown>;
+}
+
+export interface DatabaseLocationsResponse {
+  count: number;
+  limit: number;
+  offset: number;
+  sort: string;
+  order: string;
+  locations: LocationRecord[];
+  trace_id: string;
+}
+
+export interface LocationsQueryParams {
+  limit?: number;
+  offset?: number;
+  sort?: 'timestamp' | 'created_at' | 'id';
+  order?: 'asc' | 'desc';
+}
+
+// Retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelayMs: 1000,
+  maxDelayMs: 10000,
+  retryStatusCodes: [408, 429, 500, 502, 503, 504],
+};
 
 // Generic API response type with trace ID (for custom endpoints)
 export type ApiResponse = {
@@ -64,7 +117,36 @@ axiosInstance.interceptors.request.use(
 );
 
 /**
- * Response interceptor - Handle errors and extract trace IDs
+ * Calculate exponential backoff delay with jitter
+ */
+function calculateRetryDelay(attempt: number): number {
+  const exponentialDelay = RETRY_CONFIG.baseDelayMs * Math.pow(2, attempt);
+  const jitter = Math.random() * 0.3 * exponentialDelay; // Add 0-30% jitter
+  return Math.min(exponentialDelay + jitter, RETRY_CONFIG.maxDelayMs);
+}
+
+/**
+ * Check if request should be retried based on error
+ */
+function shouldRetry(error: AxiosError): boolean {
+  // Don't retry if no response (network error) - these may be retried
+  if (!error.response) {
+    return error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
+  }
+
+  // Retry on specific status codes
+  return RETRY_CONFIG.retryStatusCodes.includes(error.response.status);
+}
+
+/**
+ * Sleep for specified milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Response interceptor - Handle errors, extract trace IDs, and implement retry logic
  */
 axiosInstance.interceptors.response.use(
   response => {
@@ -81,9 +163,13 @@ axiosInstance.interceptors.response.use(
       response.data.traceId = traceId;
     }
 
+    // Reset retry count on success
+    delete (response.config as InternalAxiosRequestConfig & { __retryCount?: number }).__retryCount;
+
     return response;
   },
   async (error: AxiosError) => {
+    const config = error.config as InternalAxiosRequestConfig & { __retryCount?: number };
     const traceId = error.response?.headers['x-trace-id'];
 
     if (traceId) {
@@ -101,6 +187,28 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 403) {
       console.error('Forbidden (403) - Insufficient permissions');
       return Promise.reject(new Error('Access denied'));
+    }
+
+    // Implement retry logic for transient errors
+    if (config && shouldRetry(error)) {
+      config.__retryCount = config.__retryCount || 0;
+
+      if (config.__retryCount < RETRY_CONFIG.maxRetries) {
+        config.__retryCount += 1;
+        const delay = calculateRetryDelay(config.__retryCount - 1);
+
+        console.log(
+          `[Retry ${config.__retryCount}/${RETRY_CONFIG.maxRetries}] ` +
+            `Retrying ${config.method?.toUpperCase()} ${config.url} in ${Math.round(delay)}ms`
+        );
+
+        await sleep(delay);
+        return axiosInstance(config);
+      }
+
+      console.error(
+        `[Max Retries Exceeded] Failed after ${RETRY_CONFIG.maxRetries} retries: ${config.url}`
+      );
     }
 
     // Log other errors with trace ID if available
@@ -176,6 +284,40 @@ class ApiService {
    */
   async getSlowDemo(): Promise<SlowResponse> {
     const response: AxiosResponse<SlowResponse> = await this.client.get('/slow');
+    return response.data;
+  }
+
+  /**
+   * Database status endpoint
+   * GET /db/status
+   * Returns database connection status and version info
+   */
+  async getDatabaseStatus(): Promise<DatabaseStatusResponse> {
+    const response: AxiosResponse<DatabaseStatusResponse> = await this.client.get('/db/status');
+    return response.data;
+  }
+
+  /**
+   * Database locations endpoint
+   * GET /db/locations
+   * Returns paginated list of location records from OwnTracks database
+   *
+   * @param params - Query parameters for pagination and sorting
+   */
+  async getDatabaseLocations(params?: LocationsQueryParams): Promise<DatabaseLocationsResponse> {
+    const queryParams = new URLSearchParams();
+
+    if (params) {
+      if (params.limit !== undefined) queryParams.append('limit', params.limit.toString());
+      if (params.offset !== undefined) queryParams.append('offset', params.offset.toString());
+      if (params.sort) queryParams.append('sort', params.sort);
+      if (params.order) queryParams.append('order', params.order);
+    }
+
+    const queryString = queryParams.toString();
+    const url = `/db/locations${queryString ? `?${queryString}` : ''}`;
+
+    const response: AxiosResponse<DatabaseLocationsResponse> = await this.client.get(url);
     return response.data;
   }
 

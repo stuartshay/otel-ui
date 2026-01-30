@@ -102,28 +102,45 @@ React frontend application for consuming the otel-demo API with OAuth2 authentic
 
 ---
 
-## In Progress Tasks 🔄
+## Completed Tasks ✅ (Continued)
 
-### 8. API Client Service
+### 11. API Client Service (Completed Jan 30, 2026)
 
-- [ ] Create `src/services/api.ts`
-  - [ ] Axios instance with base URL configuration
-  - [ ] Request interceptor for Authorization header
-  - [ ] Response interceptor for 401/403 handling
-  - [ ] Typed endpoints using `@stuartshay/otel-types`
-  - [ ] Error handling and retry logic
-  - [ ] Trace ID extraction from `x-trace-id` header
+- [x] Create `src/services/api.ts`
+  - [x] Axios instance with base URL configuration
+  - [x] Request interceptor for Authorization header
+  - [x] Response interceptor for 401/403 handling
+  - [x] Typed endpoints using `@stuartshay/otel-types`
+  - [x] Error handling and retry logic with exponential backoff
+  - [x] Trace ID extraction from `x-trace-id` header
+  - [x] Database endpoints (`/db/status`, `/db/locations`)
+  - [x] Type definitions for all database responses
 
-### 9. React Context Providers
+### 12. Test Coverage Expansion (Completed Jan 30, 2026)
 
-- [ ] Create `src/contexts/AuthContext.tsx`
-  - [ ] Auth state management (user, loading, authenticated)
-  - [ ] Login/logout methods
-  - [ ] Protected route wrapper
-  - [ ] Token refresh logic
-- [ ] Create `src/contexts/ApiContext.tsx` (optional)
-  - [ ] API client instance
-  - [ ] Global error handling
+- [x] Create `tests/api-service.spec.ts`
+  - [x] Health endpoint tests
+  - [x] Database endpoint tests
+  - [x] Demo endpoint tests
+  - [x] Trace ID consistency tests
+  - [x] CORS header validation
+  - [x] Error handling tests
+  - [x] Retry logic tests
+- [x] Create `tests/auth-service.spec.ts`
+  - [x] Session management tests
+  - [x] Logout flow tests
+  - [x] UI state tests
+  - [x] Error handling tests
+  - [x] Protected route access tests
+  - [x] Cognito integration tests
+
+### 13. React Context Providers (Completed)
+
+- [x] Create `src/contexts/AuthContext.tsx`
+  - [x] Auth state management (user, loading, authenticated)
+  - [x] Login/logout methods
+  - [x] Protected route wrapper
+  - [x] Token refresh logic
 
 ---
 
