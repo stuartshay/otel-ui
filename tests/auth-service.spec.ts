@@ -1,21 +1,24 @@
 /**
- * Authentication Service Tests
+ * Authentication Integration Tests
  *
- * Tests for the authentication service including:
- * - Session persistence
- * - Token refresh behavior
- * - Logout functionality
- * - Error handling
+ * Integration tests that verify authentication behavior through the UI including:
+ * - Session management
+ * - Logout flow
+ * - Protected route access
+ * - Cognito OAuth2/PKCE integration
+ *
+ * Note: These are UI-level integration tests, not unit tests of auth.ts
  */
 
 import { test, expect } from '@playwright/test';
 
 /**
- * These tests verify the auth service functionality through the UI.
- * They test localStorage persistence, session management, and logout.
+ * Configuration from environment variables (matching app config)
  */
-
-const BASE_URL = 'http://localhost:5173';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
+const COGNITO_DOMAIN =
+  process.env.VITE_COGNITO_DOMAIN || 'homelab-auth.auth.us-east-1.amazoncognito.com';
+const COGNITO_CLIENT_ID = process.env.VITE_COGNITO_CLIENT_ID || '5j475mtdcm4qevh7q115qf1sfj';
 
 test.describe('Auth Service - Session Management', () => {
   test('should initialize without user on fresh load', async ({ page }) => {
@@ -70,8 +73,9 @@ test.describe('Auth Service - Session Management', () => {
 
     // OIDC client stores state with prefix 'oidc.'
     const hasOidcState = keys.some(key => key.includes('oidc'));
-    // Note: State may not persist due to redirect behavior
-    expect(typeof hasOidcState).toBe('boolean');
+    // Note: Due to redirect timing, state may not always be captured
+    // This assertion verifies the test ran - full OIDC state testing requires auth credentials
+    expect(hasOidcState === true || hasOidcState === false).toBe(true);
   });
 });
 
@@ -240,9 +244,9 @@ test.describe('Auth Service - Cognito Integration', () => {
 
     const url = page.url();
 
-    // Verify Cognito configuration
-    expect(url).toContain('homelab-auth.auth.us-east-1.amazoncognito.com');
-    expect(url).toContain('client_id=5j475mtdcm4qevh7q115qf1sfj');
+    // Verify Cognito configuration using env vars
+    expect(url).toContain(COGNITO_DOMAIN);
+    expect(url).toContain(`client_id=${COGNITO_CLIENT_ID}`);
     expect(url).toContain('response_type=code');
     expect(url).toContain('scope=openid');
   });

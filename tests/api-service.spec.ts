@@ -13,8 +13,10 @@
 
 import { test, expect } from '@playwright/test';
 
-// Backend API base URL (from environment or default to localhost)
+// Configuration from environment variables
 const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const PRODUCTION_UI_ORIGIN =
+  process.env.VITE_PRODUCTION_UI_ORIGIN || 'https://ui.lab.informationcart.com';
 
 test.describe('API Service - Direct API Tests', () => {
   test.describe('Health Endpoints', () => {
@@ -126,14 +128,14 @@ test.describe('API Service - Direct API Tests', () => {
     test('should include CORS headers for production origin', async ({ request }) => {
       const response = await request.get(`${API_BASE_URL}/health`, {
         headers: {
-          Origin: 'https://ui.lab.informationcart.com',
+          Origin: PRODUCTION_UI_ORIGIN,
         },
       });
 
       expect(response.ok()).toBeTruthy();
 
       const headers = response.headers();
-      expect(headers['access-control-allow-origin']).toBe('https://ui.lab.informationcart.com');
+      expect(headers['access-control-allow-origin']).toBe(PRODUCTION_UI_ORIGIN);
     });
   });
 
