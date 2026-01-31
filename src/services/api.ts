@@ -12,53 +12,12 @@ export type ChainResponse = paths['/chain']['get']['responses']['200']['content'
 export type ErrorResponse = paths['/error']['get']['responses']['500']['content']['*/*'];
 export type SlowResponse = paths['/slow']['get']['responses']['200']['content']['*/*'];
 
-// Database endpoint response types
-// NOTE: These types are defined inline because /db/* endpoints are not yet in the
-// @stuartshay/otel-types OpenAPI schema. Once the schema is updated with these endpoints,
-// these inline types should be replaced with derived types using: paths['/db/status']['get']...
-export interface DatabaseStatusResponse {
-  status: 'connected' | 'disconnected' | 'error';
-  database: string;
-  host: string;
-  port: number;
-  server_version: string;
-  trace_id: string;
-}
-
-export interface LocationRecord {
-  id: number;
-  device_id: string;
-  tid: string;
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  altitude: number;
-  velocity: number;
-  battery: number;
-  battery_status: number;
-  connection_type: string;
-  trigger: string;
-  timestamp: string;
-  created_at: string;
-  raw_payload: Record<string, unknown>;
-}
-
-export interface DatabaseLocationsResponse {
-  count: number;
-  limit: number;
-  offset: number;
-  sort: string;
-  order: string;
-  locations: LocationRecord[];
-  trace_id: string;
-}
-
-export interface LocationsQueryParams {
-  limit?: number;
-  offset?: number;
-  sort?: 'timestamp' | 'created_at' | 'id';
-  order?: 'asc' | 'desc';
-}
+// Database endpoint types - derived from OpenAPI schema
+export type DatabaseStatusResponse =
+  paths['/db/status']['get']['responses']['200']['content']['*/*'];
+export type DatabaseLocationsResponse =
+  paths['/db/locations']['get']['responses']['200']['content']['*/*'];
+export type LocationsQueryParams = paths['/db/locations']['get']['parameters']['query'];
 
 // Retry configuration
 const RETRY_CONFIG = {
