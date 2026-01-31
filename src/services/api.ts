@@ -13,6 +13,9 @@ export type ErrorResponse = paths['/error']['get']['responses']['500']['content'
 export type SlowResponse = paths['/slow']['get']['responses']['200']['content']['*/*'];
 
 // Database endpoint response types
+// NOTE: These types are defined inline because /db/* endpoints are not yet in the
+// @stuartshay/otel-types OpenAPI schema. Once the schema is updated with these endpoints,
+// these inline types should be replaced with derived types using: paths['/db/status']['get']...
 export interface DatabaseStatusResponse {
   status: 'connected' | 'disconnected' | 'error';
   database: string;
