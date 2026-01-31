@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import type { HealthResponse, InfoResponse } from '../services/api';
+import { getConfig } from '../config/runtime';
 import Layout from './Layout';
 import '../styles/Dashboard.css';
 
@@ -121,8 +122,18 @@ export default function Dashboard() {
                   🚀
                 </div>
                 <div className="stat-content">
-                  <div className="stat-label">Service Version</div>
+                  <div className="stat-label">API Version</div>
                   <div className="stat-value">{serviceInfo?.version || 'N/A'}</div>
+                </div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-icon" style={{ backgroundColor: '#f0e6ff', color: '#6f42c1' }}>
+                  🖥️
+                </div>
+                <div className="stat-content">
+                  <div className="stat-label">Frontend Version</div>
+                  <div className="stat-value">{getConfig('APP_VERSION', 'dev')}</div>
                 </div>
               </div>
             </div>
