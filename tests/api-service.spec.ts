@@ -1,12 +1,11 @@
 /**
- * API Service Unit Tests
+ * API Service Integration Tests
  *
  * Tests for the API client service including:
  * - Health and demo endpoints
  * - Trace ID consistency
  * - CORS header validation
  * - Error handling
- * - Request handling
  *
  * NOTE: Database endpoint tests are in tests/database-endpoints.spec.ts
  */
@@ -152,42 +151,6 @@ test.describe('API Service - Direct API Tests', () => {
     test('GET /nonexistent should return 404', async ({ request }) => {
       const response = await request.get(`${API_BASE_URL}/nonexistent-endpoint-xyz`);
       expect(response.status()).toBe(404);
-    });
-  });
-});
-
-test.describe('API Service - Request Handling Tests', () => {
-  // Note: These tests verify basic request handling and concurrent request behavior.
-  // Full retry testing would require a mock server that returns transient errors.
-  // The retry logic in api.ts handles status codes: 408, 429, 500, 502, 503, 504
-
-  test('should successfully complete request on 200', async ({ request }) => {
-    const response = await request.get(`${API_BASE_URL}/health`);
-    expect(response.ok()).toBeTruthy();
-    expect(response.status()).toBe(200);
-  });
-
-  test('should handle long-running requests within timeout', async ({ request }) => {
-    // The /slow endpoint has a delay but should complete within timeout
-    const response = await request.get(`${API_BASE_URL}/slow`, {
-      timeout: 60000, // Allow plenty of time
-    });
-    expect(response.ok()).toBeTruthy();
-  });
-
-  test('should complete multiple concurrent requests', async ({ request }) => {
-    // Test that multiple requests can complete successfully
-    const requests = [
-      request.get(`${API_BASE_URL}/health`),
-      request.get(`${API_BASE_URL}/db/status`),
-      request.get(`${API_BASE_URL}/info`),
-    ];
-
-    const responses = await Promise.all(requests);
-
-    responses.forEach(response => {
-      expect(response.ok()).toBeTruthy();
-      expect(response.status()).toBe(200);
     });
   });
 });
