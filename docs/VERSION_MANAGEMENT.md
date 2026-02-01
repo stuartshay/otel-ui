@@ -28,7 +28,7 @@ otel-ui uses **semantic versioning** with manual version control via the `VERSIO
 3. **Bump the version** using the update script:
 
    ```bash
-   cd /home/ubuntu/git/otel-ui
+   # From repository root
    ./scripts/update-version.sh 1.0.X
    ```
 
@@ -42,7 +42,7 @@ otel-ui uses **semantic versioning** with manual version control via the `VERSIO
    ```bash
    git add -A
    git commit -m "feat: Add awesome feature - bump to v1.0.X"
-   git push origin develop  # or feature/my-feature
+   git push origin HEAD  # pushes current branch (develop or feature/*)
    ```
 
 5. **Create PR** to `main` on GitHub
@@ -58,7 +58,7 @@ otel-ui uses **semantic versioning** with manual version control via the `VERSIO
 ### ✅ DO
 
 - **Bump version in your PR** before requesting merge
-- Use the `update-version.sh` script (updates all 3 files atomically)
+- Use the `update-version.sh` script (updates VERSION, package.json, README.md consistently)
 - Follow semantic versioning (patch for fixes, minor for features)
 - Test the build locally before pushing: `docker build -t otel-ui:test .`
 
@@ -87,7 +87,7 @@ vim src/components/NewFeature.tsx
 # Commit everything
 git add -A
 git commit -m "feat: Add new feature - bump to v1.0.83"
-git push origin develop
+git push origin HEAD
 
 # Create PR on GitHub: develop → main
 # After merge, GitHub Actions builds stuartshay/otel-ui:1.0.83
@@ -189,7 +189,7 @@ git push origin fix/update-version
 - `VERSION` - Single source of truth for version number
 - `package.json` - NPM package version (synced by script)
 - `README.md` - Deployment status line (synced by script)
-- `scripts/update-version.sh` - Atomic update script
+- `scripts/update-version.sh` - Version update script
 - `.github/workflows/docker.yml` - CI/CD pipeline
 
 ## Version History

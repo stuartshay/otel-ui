@@ -14,7 +14,7 @@ jobs:
     name: Build and Push
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
 
     steps:
@@ -24,9 +24,18 @@ jobs:
       - name: Read version from VERSION file
         id: version
         run: |
+          if [ ! -f VERSION ]; then
+            echo "❌ ERROR: VERSION file not found"
+            exit 1
+          fi
           VERSION=$(cat VERSION)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "❌ ERROR: VERSION file contains invalid semver: $VERSION"
+            echo "Expected format: X.Y.Z (e.g., 1.0.82)"
+            exit 1
+          fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Using version from VERSION file: ${VERSION}"
+          echo "✅ Using version from VERSION file: ${VERSION}"
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
