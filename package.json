@@ -1,7 +1,7 @@
 {
   "name": "otel-ui",
   "private": true,
-  "version": "1.0.77",
+  "version": "1.0.82",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,6 +23,13 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@opentelemetry/context-zone": "^2.5.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.211.0",
+    "@opentelemetry/instrumentation-fetch": "^0.211.0",
+    "@opentelemetry/instrumentation-xml-http-request": "^0.211.0",
+    "@opentelemetry/resources": "^2.5.0",
+    "@opentelemetry/sdk-trace-web": "^2.5.0",
+    "@opentelemetry/semantic-conventions": "^1.39.0",
     "@stuartshay/otel-types": "^1.0.64",
     "axios": "^1.13.2",
     "oidc-client-ts": "^3.4.1",

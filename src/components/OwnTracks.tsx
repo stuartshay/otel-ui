@@ -77,7 +77,7 @@ export default function OwnTracks() {
 
     if (processingJobs.length === 0) return;
 
-    let timeoutId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
 
     // Self-scheduling poll loop to avoid overlapping requests
