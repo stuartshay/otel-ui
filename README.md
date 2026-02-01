@@ -17,7 +17,7 @@ A modern React + TypeScript frontend that consumes the otel-demo Flask API, feat
 - **Responsive Design** - Mobile-friendly UI
 - **Docker Deployment** - nginx container for K8s
 
-**Deployment Status**: Version 1.0.80 deployed to [ui.lab.informationcart.com](https://ui.lab.informationcart.com) 🚀
+**Deployment Status**: Version 1.0.82 deployed to [ui.lab.informationcart.com](https://ui.lab.informationcart.com) 🚀
 
 **Authentication**: ✅ Fully functional OAuth2/PKCE flow with login, callback, and logout
 
