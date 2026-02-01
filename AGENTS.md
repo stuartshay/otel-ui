@@ -13,21 +13,25 @@ All automation, assistants, and developers must follow
 ## Quick Reference
 
 - **Development branch**: `develop` (default working branch)
-- **Production branch**: `main` (releases only)
+- **Production branch**: `main` (releases only, PR-only, direct commits FORBIDDEN)
 - **Lint before commit**: `npm run lint:all`
 - **Format code**: `npm run format`
 - **Type check**: `npm run type-check`
 - **Build**: `npm run build`
 - **Run dev**: `npm run dev`
 
+⚠️ **CRITICAL RULE**: NEVER commit directly to `main` branch!
+
 ## Development Workflow
 
 **Branch Strategy:**
 
+⚠️ **NEVER commit directly to `main`** - All changes MUST use `develop` or `feature/*` branches
+
 - Work on `develop` branch for all changes
 - Create feature branches from `develop` for larger features
-- PR to `develop` for review
-- `main` is for releases only (merged from `develop`)
+- PR to `main` when ready to deploy (from `develop` or `feature/*`)
+- `main` is for releases only (PR required, direct commits FORBIDDEN)
 
 **Development Steps:**
 
@@ -37,7 +41,8 @@ All automation, assistants, and developers must follow
 4. Run `npm run type-check` to verify types
 5. Test locally: `npm run dev`
 6. Commit (pre-commit hooks will run)
-7. Push to `develop` or create PR
+7. Push to `develop` or `feature/*` branch
+8. Create PR to `main` when ready for production
 
 ## Project Structure
 

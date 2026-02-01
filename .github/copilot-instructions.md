@@ -28,21 +28,29 @@ React frontend for consuming the otel-demo API with OAuth2 authentication via AW
 
 ### Branch Strategy
 
-- **main**: Protected branch, production-only (PR required)
+⚠️ **CRITICAL RULE**: NEVER commit directly to `main` branch. All changes MUST go through `develop` or `feature/*` branches.
+
+- **main**: Protected branch, production-only (PR required, direct commits FORBIDDEN)
 - **develop**: Primary development branch (work here by default)
-- **feature/\***: Feature branches (optional for large changes)
+- **feature/\***: Feature branches (use for isolated features, PR to develop or main)
 
 ### Daily Workflow
 
-1. Work on `develop` branch for all changes
+1. **ALWAYS** start from `develop` or create a feature branch
 2. Run `npm install` to install dependencies
 3. Configure `.env.local` with API and Cognito settings
 4. Run `npm run dev` for development server
 5. Run `npm run lint` before commit
-6. Commit and push to `develop`
-7. Create PR from `develop` → `main` when ready to deploy
+6. Commit and push to `develop` or `feature/*` branch
+7. Create PR from `develop` → `main` OR `feature/*` → `main` when ready to deploy
 8. Merge PR triggers CI/CD pipeline
 9. GitHub Actions auto-generates version and builds Docker image
+
+**Workflow Options:**
+
+- Small changes: Work directly on `develop`, then PR to `main`
+- Large features: Create `feature/name` branch, then PR to `main`
+- **NEVER**: `git push origin main` or commit directly to main
 
 ## Writing Code
 
@@ -79,6 +87,7 @@ React frontend for consuming the otel-demo API with OAuth2 authentication via AW
 
 ## Safety Rules (Do Not)
 
+- ⛔ **NEVER commit directly to main branch** - ALWAYS use develop or feature branches
 - Do not commit secrets or API keys
 - Do not use `any` type - prefer `unknown` or specific types
 - Do not skip `npm run lint` before commits

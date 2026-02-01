@@ -37,18 +37,45 @@ npm run dev
 
 ### Git Workflow
 
-- **main** - Production branch (protected, deploys to production)
-- **develop** - Development branch (active development happens here)
-- **feature/** - Feature branches (branch from develop, PR to develop)
+⚠️ **CRITICAL**: Never commit directly to `main`. All changes must go through pull requests.
+
+- **main** - Production branch (protected, PR-only, direct commits forbidden)
+- **develop** - Development branch (work here for regular changes)
+- **feature/** - Feature branches (use for isolated features)
+
+**Two workflow options:**
+
+**Option 1 - Direct develop to main (for regular changes):**
 
 ```bash
-# Start new work
 git checkout develop
 git pull origin develop
-git checkout -b feature/my-feature
+# Make your changes
+git add .
+git commit -m "feat: description"
+git push origin develop
+# Create PR: develop → main on GitHub
+```
 
-# When ready, create PR to develop
-# After review and merge, develop will be merged to main for release
+**Option 2 - Feature branch (for isolated features):**
+
+```bash
+git checkout develop  # or main
+git pull origin develop
+git checkout -b feature/my-feature
+# Make your changes
+git add .
+git commit -m "feat: description"
+git push origin feature/my-feature
+# Create PR: feature/my-feature → main on GitHub
+```
+
+**Never do this:**
+
+```bash
+git checkout main
+git commit ...  # ❌ FORBIDDEN
+git push origin main  # ❌ FORBIDDEN
 ```
 
 ### Prerequisites
