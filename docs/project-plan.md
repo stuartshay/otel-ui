@@ -436,6 +436,164 @@ Kubernetes platform maturity improvements from [k8s-gitops TODO.md](../../k8s-gi
 
 ---
 
+### Phase 2.5: GPS Tracking Features (OwnTracks + Garmin) ⏳ PLANNED
+
+**Target**: Q1 2026 | **Effort**: 10-15 hours
+
+#### Database Schema Integration
+
+**Migration Repository**: [homelab-database-migrations](https://github.com/stuartshay/homelab-database-migrations)
+
+The backend database now supports dual-source GPS tracking:
+
+1. **OwnTracks** (Real-time tracking)
+   - Live location updates from mobile app
+   - Device-based tracking
+   - Battery, accuracy, velocity metrics
+
+2. **Garmin Connect** (Activity tracking - NEW)
+   - Cycling, running, walking activities
+   - Rich fitness metrics (heart rate, cadence, elevation)
+   - Historical GPS routes from workouts
+   - Sample data: 50.6km cycling activity (10,707 GPS points)
+
+#### Backend API Integration (otel-demo)
+
+- [ ] **gRPC-to-REST distance API** - Integration with otel-worker
+  - POST `/api/distance/calculate` - Start async distance calculation
+  - GET `/api/distance/jobs/{id}` - Poll job status
+  - GET `/api/distance/jobs` - List jobs with filtering
+  - GET `/api/distance/download/{file}` - Download CSV results
+
+- [ ] **Garmin activity API** (after otel-worker schema updates)
+  - GET `/api/garmin/activities` - List workout sessions
+  - GET `/api/garmin/activities/{id}` - Activity details + GPS track
+  - GET `/api/garmin/summary` - Aggregated fitness metrics
+
+#### Frontend Components
+
+**OwnTracks Distance Calculator** (Phase 2.5.1 - 4-6 hours)
+
+- [ ] Create `DistanceCalculator` component
+  - Date picker for calculation date
+  - Device selector dropdown (or "all devices")
+  - Calculate button with loading state
+  - Job status display (queued → processing → completed)
+  - Summary metrics card:
+    - Total distance traveled
+    - Max distance from home
+    - Number of locations recorded
+    - Processing time
+  - CSV download button
+
+- [ ] Create `DistanceHistory` component
+  - Table of past distance calculations
+  - Filterable by date, device, status
+  - Re-download CSV from completed jobs
+  - Delete old jobs
+
+**Garmin Activity Viewer** (Phase 2.5.2 - 6-9 hours)
+
+- [ ] Create `ActivityList` component
+  - Grid/list view of workout sessions
+  - Filter by date range, sport type
+  - Sort by distance, duration, date
+  - Activity cards show:
+    - Sport icon (cycling/running/walking)
+    - Date and duration
+    - Distance and average speed
+    - Heart rate summary
+    - Thumbnail map (optional)
+
+- [ ] Create `ActivityDetails` component
+  - Full activity metadata
+  - Stats cards: distance, time, speed, HR, elevation
+  - GPS track visualization (map or elevation chart)
+  - Split times / lap data
+  - Export to GPX/TCX
+
+- [ ] Create `ActivityMap` component
+  - Interactive map with GPS route
+  - Color-coded by speed or heart rate
+  - Playback animation along route
+  - Elevation profile chart
+  - Marker at start/finish
+  - Home location marker (40.736097°N, 74.039373°W)
+
+**Unified GPS Dashboard** (Phase 2.5.3 - 4-5 hours)
+
+- [ ] Create `GPSDashboard` component
+  - Tabbed interface: "Live Tracking" vs "Activities"
+  - Date range selector
+  - Combined statistics:
+    - Total distance (OwnTracks + Garmin)
+    - Active days in range
+    - Average distance per day
+    - Device/activity breakdown
+  - Chart of distance over time
+  - Heatmap of frequent locations
+
+#### Type-Safe API Client
+
+- [ ] Update `@stuartshay/otel-types` package
+  - Add distance calculation types
+  - Add Garmin activity types
+  - Add job status types
+  - Publish new version to npm
+
+- [ ] Update otel-ui API client
+  - Add distance service methods
+  - Add Garmin service methods
+  - OAuth2 token injection
+  - Error handling with trace IDs
+
+#### UI/UX Design
+
+- [ ] Distance calculation page mockup
+- [ ] Garmin activity list mockup
+- [ ] Activity detail page mockup
+- [ ] Map component styling
+- [ ] Mobile-responsive layouts
+- [ ] Dark mode support
+
+#### Testing
+
+- [ ] Unit tests for GPS components
+- [ ] Integration tests with mock API
+- [ ] E2E tests for distance calculation flow
+- [ ] E2E tests for activity viewing
+- [ ] Map rendering tests (Leaflet/Mapbox)
+
+#### Documentation
+
+- [ ] User guide: "Calculating Distance from Home"
+- [ ] User guide: "Viewing Garmin Activities"
+- [ ] API integration documentation
+- [ ] Component storybook examples
+
+**Total Estimated Time**: 14-20 hours
+
+**Dependencies**:
+
+- otel-worker Phase 7 (Garmin schema integration)
+- otel-demo distance API implementation
+- homelab-database-migrations deployed
+
+**Benefits**:
+
+- Real user-facing functionality
+- Demonstrates dual-source GPS value
+- Rich data visualization
+- Full-stack feature (database → API → UI)
+
+**See Also**:
+
+- [homelab-database-migrations](https://github.com/stuartshay/homelab-database-migrations)
+- [otel-worker PROJECT_PLAN.md Phase 7](../../otel-worker/docs/PROJECT_PLAN.md)
+- [otel-demo DISTANCE_INTEGRATION_PLAN.md](../../otel-demo/docs/DISTANCE_INTEGRATION_PLAN.md)
+
+---
+
 ### Phase 3: otel-middleware (Python Workers)
 
 **Target**: Q2 2026 | **Effort**: TBD
@@ -462,12 +620,24 @@ Kubernetes platform maturity improvements from [k8s-gitops TODO.md](../../k8s-gi
 | ✅ Testing + Debugging  | Done   | ~2 hours    |
 | **Total**               | ✅     | **~16 hrs** |
 
+### Phase 2.5 (⏳ PLANNED - GPS Tracking Features)
+
+| Task Group                    | Status | Estimated Time |
+| ----------------------------- | ------ | -------------- |
+| OwnTracks Distance Calculator | ⏳     | 4-6 hours      |
+| Garmin Activity Viewer        | ⏳     | 6-9 hours      |
+| Unified GPS Dashboard         | ⏳     | 4-5 hours      |
+| API Client Updates            | ⏳     | 2-3 hours      |
+| Testing + Documentation       | ⏳     | 3-4 hours      |
+| **Total**                     | ⏳     | **19-27 hrs**  |
+
 ### Future Releases
 
 | Release | Focus                 | Effort    |
 | ------- | --------------------- | --------- |
 | v1.1.0  | Browser Tracing       | 2-3 hours |
 | v1.2.0  | Platform Improvements | 6-8 hours |
+| v1.3.0  | GPS Tracking (2.5)    | 19-27 hrs |
 | v2.0.0  | otel-middleware       | TBD       |
 
 ---
@@ -478,7 +648,4 @@ Kubernetes platform maturity improvements from [k8s-gitops TODO.md](../../k8s-gi
 - [Authentication Guide](authentication.md)
 - [Enhancement Workflow Skill](../.github/skills/enhancement-workflow/SKILL.md) - Standard workflow for features/fixes
 - [otel-ui Deployment Skill](../.github/skills/otel-ui-deployment/SKILL.md) - Complete deployment workflow
-- [k8s-gitops TODO](../../k8s-gitops/docs/TODO.md)
-- [Multi-Repo Implementation Plan](../../otel-demo/docs/multi-repo-implementation-plan.md)
-- [AWS Cognito Configuration](../../homelab-infrastructure/docs/operations.md)
-- [K8s GitOps Workflow](../../k8s-gitops/README.md)
+- [homelab-database-migrations](https://github.com/stuartshay/homelab-database-migrations) - Database schema management
